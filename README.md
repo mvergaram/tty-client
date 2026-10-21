@@ -2,6 +2,24 @@
 
 TTY/TDD software client for Windows 11 that captures Skype for Business call audio and decodes/encodes Baudot FSK tones in real time.
 
+## TTY Protocol
+
+This app implements the **US Weitbrecht TTY/TDD standard**, the protocol used by TTY devices over the telephone network in the United States:
+
+- **Modulation**: audio-frequency FSK (Frequency-Shift Keying)
+- **MARK frequency**: 1400 Hz (binary 1 / idle tone)
+- **SPACE frequency**: 1800 Hz (binary 0)
+- **Baud rate**: 45.45 baud (~22 ms per bit)
+- **Character encoding**: Baudot code, ITA-2 variant — 5 data bits per character, with LTRS/FIGS shift codes to switch between letters and digits/punctuation
+- **Frame structure**: 1 START bit (SPACE) + 5 DATA bits (LSB first) + 1.5 STOP bits (MARK)
+- **Sample rate**: 8000 Hz internally, matching standard telephony audio
+
+Decoding measures tone power at 1400 Hz and 1800 Hz with the Goertzel algorithm over short, overlapping windows, then reconstructs each character by locking onto its own start-bit edge instead of free-running a block counter — this keeps bit sampling correctly aligned even though the gap between characters (stop bits, a human typist's pauses) isn't a fixed length.
+
+TTY tones only survive a call path that doesn't transcode or compress the audio, which is why this only works over a real PSTN call with G.711 (see [Installation and setup](#installation-and-setup) below) — SfB-to-SfB calls use Silk/RTAudio and strip the tones out.
+
+See [`CLAUDE.md`](CLAUDE.md) for the fixed-parameters table and the full decode/encode pipeline diagrams.
+
 ## Requirements
 
 - Windows 11
