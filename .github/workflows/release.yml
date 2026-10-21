@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Read project version
+        id: version
+        shell: pwsh
+        run: |
+          [xml]$csproj = Get-Content TtyClient.csproj
+          $version = $csproj.Project.PropertyGroup.Version
+          $shortSha = "${{ github.sha }}".Substring(0, 7)
+          $tag = "v$version-$shortSha"
+          echo "tag=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Publish
+        run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Rename artifact
+        id: artifact
+        shell: pwsh
+        run: |
+          $dest = "TtyClient-${{ steps.version.outputs.tag }}-win-x64.exe"
+          Copy-Item "bin\Release\net10.0-windows\win-x64\publish\TtyClient.exe" $dest
+          echo "path=$dest" >> $env:GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "TTY Dynamic Client ${{ steps.version.outputs.tag }}"
+          generate_release_notes: true
+          files: ${{ steps.artifact.outputs.path }}
