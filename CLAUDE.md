@@ -1,106 +1,106 @@
 # TTY Dynamic Client — Skype for Business
 
-Cliente de software TTY/TDD para Windows 11 que captura el audio de llamadas de Skype for Business y decodifica/codifica tonos FSK Baudot en tiempo real.
+TTY/TDD software client for Windows 11 that captures Skype for Business call audio and decodes/encodes Baudot FSK tones in real time.
 
 ## Stack
 
-- **Lenguaje**: C# 13 / .NET 10 (net10.0-windows)
+- **Language**: C# 13 / .NET 10 (net10.0-windows)
 - **UI**: WPF
 - **Audio**: NAudio 2.2.1 (WASAPI loopback + WasapiOut)
-- **Protocolo TTY**: Weitbrecht estándar EE.UU. — 45.45 baud, 1400/1800 Hz FSK, Baudot ITA-2
+- **TTY protocol**: US Weitbrecht standard — 45.45 baud, 1400/1800 Hz FSK, Baudot ITA-2
 
-## Comandos
+## Commands
 
 ```bash
-# Compilar
+# Build
 dotnet build
 
-# Ejecutar
+# Run
 dotnet run
 
-# Publicar ejecutable autónomo (un único .exe, sin DLLs nativas sueltas)
+# Publish a standalone executable (a single .exe, no loose native DLLs)
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
 ```
 
-El `.exe` resultante queda en `bin\Release\net10.0-windows\win-x64\publish\TtyClient.exe`.
+The resulting `.exe` ends up at `bin\Release\net10.0-windows\win-x64\publish\TtyClient.exe`.
 
-- **Self-contained** (incluye el runtime de .NET 10): el `.exe` es más pesado pero corre en cualquier Windows 11 x64 sin instalar nada adicional. La alternativa framework-dependent da un `.exe` liviano pero exige tener el .NET 10 Desktop Runtime instalado en la máquina destino.
-- **`IncludeNativeLibrariesForSelfExtract=true`**: las DLLs nativas de interop de WPF (`PresentationNative_cor3.dll`, `wpfgfx_cor3.dll`, `vcruntime140_cor3.dll`, etc.) quedan embebidas dentro del único `.exe` y se auto-extraen a una carpeta temporal en el primer arranque, en vez de quedar sueltas junto al `.exe`.
-- **Icono y nombre**: configurados en `TtyClient.csproj` (`ApplicationIcon`, `Product`, `AssemblyTitle`, `Version`) y en el `Icon=`/`Title=` de `MainWindow.xaml`. El icono vive en `Assets\icon.ico` — reemplazar ese archivo y volver a publicar para cambiarlo.
+- **Self-contained** (bundles the .NET 10 runtime): the `.exe` is heavier but runs on any Windows 11 x64 machine with nothing else installed. The framework-dependent alternative produces a lighter `.exe` but requires the .NET 10 Desktop Runtime installed on the target machine.
+- **`IncludeNativeLibrariesForSelfExtract=true`**: the native WPF interop DLLs (`PresentationNative_cor3.dll`, `wpfgfx_cor3.dll`, `vcruntime140_cor3.dll`, etc.) get embedded inside the single `.exe` and self-extract to a temp folder on first launch, instead of sitting loose next to the `.exe`.
+- **Icon and name**: configured in `TtyClient.csproj` (`ApplicationIcon`, `Product`, `AssemblyTitle`, `Version`) and in `MainWindow.xaml`'s `Icon=`/`Title=`. The icon lives at `Assets\icon.ico` — replace that file and republish to change it.
 
-## Estructura
+## Structure
 
 ```
 tty-client/
 ├── Audio/
-│   ├── AudioCapture.cs        # WASAPI loopback (Render) o captura real (Capture) según el dispositivo elegido
-│   ├── AudioEndpointInfo.cs   # Id/FriendlyName/DataFlow de un endpoint seleccionable como "Entrada de audio"
-│   ├── AudioResampler.cs      # Float32@inputRate → Int16@8kHz, lineal
-│   ├── VirtualMicInjector.cs  # Reproduce FSK en VB-Cable u otro dispositivo virtual (siempre Render)
-│   └── WavFileHandler.cs      # SaveToWav/LoadSamples: PCM 16-bit@8kHz ↔ archivo .wav (NAudio)
+│   ├── AudioCapture.cs        # WASAPI loopback (Render) or real capture (Capture) depending on the chosen device
+│   ├── AudioEndpointInfo.cs   # Id/FriendlyName/DataFlow of an endpoint selectable as "Audio input"
+│   ├── AudioResampler.cs      # Float32@inputRate → Int16@8kHz, linear
+│   ├── VirtualMicInjector.cs  # Plays FSK to VB-Cable or another virtual device (always Render)
+│   └── WavFileHandler.cs      # SaveToWav/LoadSamples: PCM 16-bit@8kHz ↔ .wav file (NAudio)
 ├── TTY/
-│   ├── GoertzelDetector.cs    # Potencia @ 1400 Hz vs 1800 Hz, bloques 20ms (160 samples)
+│   ├── GoertzelDetector.cs    # Power @ 1400 Hz vs 1800 Hz, 20ms blocks (160 samples)
 │   ├── BitSynchronizer.cs     # FSM: IDLE → START_BIT → DATA_BITS(5) → STOP_BIT
-│   ├── BaudotDecoder.cs       # ITA-2 5-bit → char, gestiona LTRS/FIGS shift
-│   ├── BaudotEncoder.cs       # texto → List<byte> de códigos ITA-2 con shifts
-│   └── FSKSynthesizer.cs      # Síntesis de senos 1400/1800 Hz, 45.45 baud, PCM 16-bit
+│   ├── BaudotDecoder.cs       # ITA-2 5-bit → char, manages LTRS/FIGS shift
+│   ├── BaudotEncoder.cs       # text → List<byte> of ITA-2 codes with shifts
+│   └── FSKSynthesizer.cs      # 1400/1800 Hz sine synthesis, 45.45 baud, 16-bit PCM
 ├── Views/
-│   ├── CallConversationView.xaml(.cs)  # Interfaz de llamada en vivo: dispositivos de entrada/salida, escuchar/detener, enviar texto por micrófono virtual
-│   └── AudioFilesView.xaml(.cs)        # Interfaz de archivos: texto → WAV ("Guardar WAV") y WAV → texto ("Importar WAV")
-├── MainWindow.xaml             # Shell: encabezado + TabControl que aloja las dos vistas (tema oscuro Catppuccin en App.xaml)
-├── MainWindow.xaml.cs          # Cierra la ventana de forma segura esperando CallConversationView.ShutdownAsync()
+│   ├── CallConversationView.xaml(.cs)  # Live call interface: input/output devices, start/stop listening, send text via virtual microphone
+│   └── AudioFilesView.xaml(.cs)        # Files interface: text → WAV ("Save WAV") and WAV → text ("Import WAV")
+├── MainWindow.xaml             # Shell: header + TabControl hosting the two views (dark Catppuccin theme in App.xaml)
+├── MainWindow.xaml.cs          # Closes the window safely, awaiting CallConversationView.ShutdownAsync()
 └── TtyClient.csproj
 ```
 
-Cada interfaz es un `UserControl` independiente con su propio estado (su propia instancia de `FSKSynthesizer`, su propio transcript): `CallConversationView` posee los recursos de audio en vivo (`AudioCapture`, `VirtualMicInjector`) y expone `ShutdownAsync()` para liberarlos sin bloquear el hilo de UI al cerrar; `AudioFilesView` no depende de ningún dispositivo de audio en vivo. Los estilos compartidos (`ActionButton`, `SendButton`, estilos de `ComboBox`) viven en `App.xaml` para que ambas vistas los reutilicen.
+Each interface is an independent `UserControl` with its own state (its own `FSKSynthesizer` instance, its own transcript): `CallConversationView` owns the live audio resources (`AudioCapture`, `VirtualMicInjector`) and exposes `ShutdownAsync()` to release them without blocking the UI thread on close; `AudioFilesView` has no dependency on any live audio device. Shared styles (`ActionButton`, `SendButton`, `ComboBox` styles) live in `App.xaml` so both views can reuse them.
 
-## Pipeline de decodificación
+## Decoding pipeline
 
-La UI tiene un selector "Entrada de audio" que lista TODOS los endpoints activos: primero los de Render (para loopback de una llamada SfB que suena por ese dispositivo) y luego los de Capture (micrófonos/handsets físicos reales, ej. un TTY acoplado acústicamente). `AudioCapture.Start(AudioEndpointInfo?)` decide `WasapiLoopbackCapture` o `WasapiCapture` según el `DataFlow` del dispositivo elegido:
+The UI has an "Audio input" selector that lists ALL active endpoints: first the Render ones (for loopback of an SfB call playing through that device), then the Capture ones (real physical microphones/handsets, e.g. an acoustically coupled TTY). `AudioCapture.Start(AudioEndpointInfo?)` picks `WasapiLoopbackCapture` or `WasapiCapture` based on the chosen device's `DataFlow`:
 
 ```
-SfB call audio (render device, loopback)        Micrófono/handset físico (capture device)
+SfB call audio (render device, loopback)        Physical microphone/handset (capture device)
   → WasapiLoopbackCapture                          → WasapiCapture
                     \                                /
                      → Float32 → Int16 mono @8kHz (AudioResampler)
-                     → Goertzel 1400 Hz / 1800 Hz, bloques 160 samples (GoertzelDetector)
-                     → Decisión MARK/SPACE por bloque → BitSynchronizer (FSM)
-                     → Bytes ITA-2 5-bit → BaudotDecoder
+                     → Goertzel 1400 Hz / 1800 Hz, 160-sample blocks (GoertzelDetector)
+                     → MARK/SPACE decision per block → BitSynchronizer (FSM)
+                     → ITA-2 5-bit bytes → BaudotDecoder
                      → char → UI (TextBlock)
 ```
 
-Ambos caminos exigen formato de entrada float32 (`AudioCapture.EnsureSupportedFormat`); si el dispositivo entrega otro formato, se informa con un error claro en vez de decodificar basura.
+Both paths require float32 input format (`AudioCapture.EnsureSupportedFormat`); if the device provides another format, a clear error is raised instead of decoding garbage.
 
-## Pipeline de codificación (envío)
+## Encoding pipeline (sending)
 
 ```
-texto del usuario
-  → BaudotEncoder → List<byte> ITA-2 con shifts
-  → FSKSynthesizer → PCM 16-bit 8kHz (senos 1400/1800 Hz a 45.45 baud)
-  → VirtualMicInjector → WasapiOut en VB-Cable
-  → SfB transmite los tonos como si fuera voz del micrófono
+user text
+  → BaudotEncoder → List<byte> of ITA-2 codes with shifts
+  → FSKSynthesizer → 16-bit PCM 8kHz (1400/1800 Hz sines at 45.45 baud)
+  → VirtualMicInjector → WasapiOut on VB-Cable
+  → SfB transmits the tones as if they were the microphone's voice
 ```
 
-## Parámetros TTY fijos
+## Fixed TTY parameters
 
-| Constante | Valor | Dónde |
+| Constant | Value | Where |
 |---|---|---|
-| Frecuencia MARK | 1400 Hz | GoertzelDetector, FSKSynthesizer |
-| Frecuencia SPACE | 1800 Hz | GoertzelDetector, FSKSynthesizer |
+| MARK frequency | 1400 Hz | GoertzelDetector, FSKSynthesizer |
+| SPACE frequency | 1800 Hz | GoertzelDetector, FSKSynthesizer |
 | Baud rate | 45.45 baud | FSKSynthesizer (SamplesPerBit = 176 @ 8kHz) |
-| Sample rate interno | 8000 Hz | GoertzelDetector, FSKSynthesizer |
-| Hop entre decisiones | 44 samples | GoertzelDetector (1/4 de bit, `OversampleFactor` = 4) |
-| Ventana de análisis | 80 samples | GoertzelDetector (10ms, solapada; múltiplo de 40 → 1400/1800 Hz caen en bins exactos) |
-| Estructura de trama | 1 START + 5 DATA + 1.5 STOP | BitSynchronizer, FSKSynthesizer |
+| Internal sample rate | 8000 Hz | GoertzelDetector, FSKSynthesizer |
+| Hop between decisions | 44 samples | GoertzelDetector (1/4 bit, `OversampleFactor` = 4) |
+| Analysis window | 80 samples | GoertzelDetector (10ms, overlapping; multiple of 40 → 1400/1800 Hz land on exact bins) |
+| Frame structure | 1 START + 5 DATA + 1.5 STOP | BitSynchronizer, FSKSynthesizer |
 
-## Prerequisitos de entorno
+## Environment prerequisites
 
-1. **VB-Audio Virtual Cable** instalado (driver gratuito): <https://vb-audio.com/Cable/>
-2. En Skype for Business → Configuración de audio → **Micrófono**: seleccionar `CABLE Input (VB-Audio Virtual Cable)`
-3. La llamada SfB debe conectarse a un **número PSTN real** — las llamadas SfB-a-SfB usan Silk/RTAudio, que no preserva los tonos FSK
-4. El gateway/SIP trunk debe estar configurado con **G.711 sin transcodificación**
+1. **VB-Audio Virtual Cable** installed (free driver): <https://vb-audio.com/Cable/>
+2. In Skype for Business → Audio settings → **Microphone**: select `CABLE Input (VB-Audio Virtual Cable)`
+3. The SfB call must connect to a **real PSTN number** — SfB-to-SfB calls use Silk/RTAudio, which does not preserve the FSK tones
+4. The gateway/SIP trunk must be configured with **G.711 without transcoding**
 
-## Verificar la configuración de SfB Server (PowerShell)
+## Checking the SfB Server configuration (PowerShell)
 
 ```powershell
 Get-CsVoicePolicy | Select-Object Identity, EnableTTYTDD
@@ -108,13 +108,13 @@ Set-CsVoicePolicy -Identity "Global" -EnableTTYTDD $true
 Get-CsTrunkConfiguration | Select-Object Identity, EnableReferSupport
 ```
 
-## Limitaciones conocidas
+## Known limitations
 
-- TTY audio **solo funciona sobre PSTN** (G.711 obligatorio). Llamadas internas SfB-a-SfB no son compatibles.
-- El `AnalysisWindow` de 80 samples en `GoertzelDetector` es un compromiso medido entre margen de ruido y tolerancia a desvío de reloj: ventanas más largas alineadas a bin (120, 160) decodifican mejor con ruido pero empiezan a fallar con ±3% de error de baud del transmisor, cosa que un gateway real puede producir. Si se cambia, debe seguir siendo múltiplo de 40 samples o ambos filtros quedan desintonizados.
-- VB-Cable es un driver de kernel; puede requerir aprobación de IT en entornos corporativos.
-- SfB 2019 tiene soporte extendido hasta octubre 2029.
+- TTY audio **only works over PSTN** (G.711 required). Internal SfB-to-SfB calls are not supported.
+- The 80-sample `AnalysisWindow` in `GoertzelDetector` is a measured trade-off between noise margin and tolerance to clock drift: longer bin-aligned windows (120, 160) decode better in noise but start failing at ±3% baud error from the transmitter, which a real gateway can produce. If changed, it must remain a multiple of 40 samples or both filters end up mistuned.
+- VB-Cable is a kernel driver; it may require IT approval in corporate environments.
+- SfB 2019 has extended support through October 2029.
 
 ## TODO
 
-- [x] ~~Revisar por qué la app se queda pegada (no responde) si se está escuchando y se presiona cerrar la ventana (X).~~ Corregido: `MainWindow.Window_Closing` cancela el cierre, espera `CallConversationView.ShutdownAsync()` (que hace `_capture.Dispose()`/`_injector.Dispose()` dentro de un `Task.Run`, fuera del hilo de UI) y recién entonces cierra la ventana.
+- [x] ~~Investigate why the app hangs (becomes unresponsive) if it's listening and the window is closed (X).~~ Fixed: `MainWindow.Window_Closing` cancels the close, awaits `CallConversationView.ShutdownAsync()` (which does `_capture.Dispose()`/`_injector.Dispose()` inside a `Task.Run`, off the UI thread), and only then closes the window.

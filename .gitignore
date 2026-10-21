@@ -1,4 +1,4 @@
-# Resultados de build (.NET / MSBuild)
+# Build output (.NET / MSBuild)
 [Bb]in/
 [Oo]bj/
 [Dd]ebug/
@@ -6,7 +6,7 @@
 x64/
 x86/
 
-# Archivos de usuario/máquina de Visual Studio
+# Visual Studio user/machine files
 .vs/
 *.suo
 *.user
@@ -23,19 +23,19 @@ packages/
 *.nuget.props
 *.nuget.targets
 
-# Logs y símbolos de depuración sueltos (fuera de bin/obj)
+# Loose logs and debug symbols (outside bin/obj)
 *.log
 *.pdb
 
-# Accesos directos y basura de Windows
+# Windows shortcuts and clutter
 *.lnk
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 
-# macOS (por si se clona/edita en Mac)
+# macOS (in case it's cloned/edited on a Mac)
 .DS_Store
 
-# Configuración local de Claude Code (no compartir entre máquinas)
+# Local Claude Code configuration (do not share across machines)
 .claude/settings.local.json

@@ -1,50 +1,50 @@
 # TTY Dynamic Client — Skype for Business
 
-Cliente de software TTY/TDD para Windows 11 que captura el audio de llamadas de Skype for Business y decodifica/codifica tonos FSK Baudot en tiempo real.
+TTY/TDD software client for Windows 11 that captures Skype for Business call audio and decodes/encodes Baudot FSK tones in real time.
 
-## Requisitos
+## Requirements
 
 - Windows 11
-- .NET 10 Desktop Runtime (o compilar/publicar self-contained, ver más abajo)
-- **[VB-CABLE Virtual Audio Device](https://vb-audio.com/Cable/)** — driver de audio virtual gratuito, **obligatorio** para enviar los tonos TTY sintetizados a Skype for Business
+- .NET 10 Desktop Runtime (or build/publish self-contained, see below)
+- **[VB-CABLE Virtual Audio Device](https://vb-audio.com/Cable/)** — free virtual audio driver, **required** to send the synthesized TTY tones to Skype for Business
 
-### ¿Por qué se necesita VB-CABLE?
+### Why is VB-CABLE needed?
 
-Skype for Business no permite inyectar audio arbitrario directamente: solo transmite lo que recibe desde el dispositivo configurado como **micrófono**. VB-CABLE resuelve esto creando un par de dispositivos de audio virtuales en Windows:
+Skype for Business doesn't allow injecting arbitrary audio directly: it only transmits whatever it receives from the device configured as the **microphone**. VB-CABLE solves this by creating a pair of virtual audio devices in Windows:
 
 > Simple & Easy! All audio streams sent to VB-CABLE inputs (Playback Device) will be forwarded to VB-CABLE outputs (Recording Device).
 
-En otras palabras: todo lo que esta app reproduce hacia **"CABLE Input"** (que Windows ve como un dispositivo de reproducción) aparece automáticamente en **"CABLE Output"** (que Windows ve como un dispositivo de grabación). Esto permite usar "CABLE Output" como si fuera un micrófono real.
+In other words: everything this app plays to **"CABLE Input"** (which Windows sees as a playback device) automatically shows up on **"CABLE Output"** (which Windows sees as a recording device). This lets "CABLE Output" be used as if it were a real microphone.
 
-Flujo concreto en esta app:
+Concrete flow in this app:
 
-1. El usuario escribe un mensaje y la app lo codifica como tonos FSK (Baudot ITA-2).
-2. La app reproduce esos tonos hacia **CABLE Input** (dispositivo "Salida de audio" en la UI).
-3. VB-CABLE reenvía esa señal a **CABLE Output**.
-4. En Skype for Business, configurado con **CABLE Output** como micrófono, los tonos se transmiten como si fueran voz del usuario.
+1. The user types a message and the app encodes it as FSK tones (Baudot ITA-2).
+2. The app plays those tones to **CABLE Input** (the "Audio output" device in the UI).
+3. VB-CABLE forwards that signal to **CABLE Output**.
+4. In Skype for Business, configured with **CABLE Output** as its microphone, the tones are transmitted as if they were the user's voice.
 
-### Instalación y configuración
+### Installation and setup
 
-1. Descargar e instalar VB-CABLE desde <https://vb-audio.com/Cable/>.
-2. En Skype for Business → Configuración de audio → **Micrófono**: seleccionar `CABLE Output (VB-Audio Virtual Cable)`.
-3. En la app, en el selector **"Salida de audio"**, elegir `CABLE Input (VB-Audio Virtual Cable)`.
-4. La llamada debe conectarse a un **número PSTN real** con el gateway/SIP trunk en **G.711 sin transcodificación** — las llamadas SfB-a-SfB usan Silk/RTAudio y no preservan los tonos FSK.
+1. Download and install VB-CABLE from <https://vb-audio.com/Cable/>.
+2. In Skype for Business → Audio settings → **Microphone**: select `CABLE Output (VB-Audio Virtual Cable)`.
+3. In the app, in the **"Audio output"** selector, choose `CABLE Input (VB-Audio Virtual Cable)`.
+4. The call must connect to a **real PSTN number** with the gateway/SIP trunk set to **G.711 without transcoding** — SfB-to-SfB calls use Silk/RTAudio and don't preserve the FSK tones.
 
-> VB-CABLE es un driver de kernel; puede requerir aprobación de IT en entornos corporativos.
+> VB-CABLE is a kernel driver; it may require IT approval in corporate environments.
 
-## Compilar y ejecutar
+## Build and run
 
 ```bash
 dotnet build
 dotnet run
 ```
 
-## Publicar ejecutable autónomo
+## Publish a standalone executable
 
 ```bash
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
 ```
 
-El `.exe` resultante queda en `bin\Release\net10.0-windows\win-x64\publish\TtyClient.exe`.
+The resulting `.exe` ends up at `bin\Release\net10.0-windows\win-x64\publish\TtyClient.exe`.
 
-Más detalles de arquitectura, pipeline de audio y parámetros TTY en [`CLAUDE.md`](CLAUDE.md).
+More details on architecture, the audio pipeline, and TTY parameters in [`CLAUDE.md`](CLAUDE.md).

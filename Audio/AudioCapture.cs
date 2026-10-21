@@ -52,7 +52,7 @@ public class AudioCapture : IDisposable
             }
             catch (System.Runtime.InteropServices.COMException)
             {
-                device = null; // desconectado desde el último refresh
+                device = null; // disconnected since the last refresh
             }
         }
         device ??= enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Communications);
@@ -85,9 +85,9 @@ public class AudioCapture : IDisposable
         if (isFloat32) return;
 
         throw new NotSupportedException(
-            $"El dispositivo «{deviceName}» entrega audio en formato {wf.Encoding} de {wf.BitsPerSample} bits. " +
-            "El decodificador solo admite coma flotante de 32 bits. Prueba con otro dispositivo o cambia su " +
-            "formato predeterminado en Configuración de sonido → Propiedades del dispositivo → Avanzado.");
+            $"Device «{deviceName}» provides audio in {wf.Encoding} format at {wf.BitsPerSample} bits. " +
+            "The decoder only supports 32-bit floating point. Try another device or change its " +
+            "default format in Sound Settings → Device Properties → Advanced.");
     }
 
     public void Stop()

@@ -30,22 +30,22 @@ public partial class AudioFilesView : UserControl
 
         var dlg = new Microsoft.Win32.SaveFileDialog
         {
-            Filter = "Archivo WAV|*.wav",
-            FileName = "tty_mensaje"
+            Filter = "WAV file|*.wav",
+            FileName = "tty_message"
         };
         if (dlg.ShowDialog() != true) return;
 
         var codes = BaudotEncoder.Encode(text);
         var pcm = _synth.Synthesize(codes);
         WavFileHandler.SaveToWav(pcm, dlg.FileName);
-        StatusLabel.Text = $"WAV guardado: {System.IO.Path.GetFileName(dlg.FileName)}";
+        StatusLabel.Text = $"WAV saved: {System.IO.Path.GetFileName(dlg.FileName)}";
     }
 
     private void BtnImportWav_Click(object sender, RoutedEventArgs e)
     {
         var dlg = new Microsoft.Win32.OpenFileDialog
         {
-            Filter = "Archivos WAV|*.wav"
+            Filter = "WAV files|*.wav"
         };
         if (dlg.ShowDialog() != true) return;
 
@@ -57,7 +57,7 @@ public partial class AudioFilesView : UserControl
         decoder.CharacterDecoded += ch => Dispatcher.Invoke(() => AppendTranscript(ch));
 
         BtnImportWav.IsEnabled = false;
-        StatusLabel.Text = "Procesando WAV…";
+        StatusLabel.Text = "Processing WAV…";
 
         Task.Run(() =>
         {
@@ -68,7 +68,7 @@ public partial class AudioFilesView : UserControl
             catch (Exception ex)
             {
                 Dispatcher.Invoke(() => MessageBox.Show(
-                    $"Error al procesar el archivo WAV:\n{ex.Message}",
+                    $"Error processing the WAV file:\n{ex.Message}",
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error));
             }
             finally
@@ -76,7 +76,7 @@ public partial class AudioFilesView : UserControl
                 Dispatcher.Invoke(() =>
                 {
                     BtnImportWav.IsEnabled = true;
-                    StatusLabel.Text = "Importación completada";
+                    StatusLabel.Text = "Import completed";
                 });
             }
         });

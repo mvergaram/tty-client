@@ -19,10 +19,10 @@
         </StackPanel>
 
         <TabControl Background="Transparent" BorderThickness="0" Padding="0">
-            <TabItem Header="Conversación de llamada">
+            <TabItem Header="Call Conversation">
                 <views:CallConversationView x:Name="CallView" Margin="12"/>
             </TabItem>
-            <TabItem Header="Archivos de audio">
+            <TabItem Header="Audio Files">
                 <views:AudioFilesView x:Name="FilesView" Margin="12"/>
             </TabItem>
         </TabControl>

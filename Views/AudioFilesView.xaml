@@ -9,7 +9,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Texto a convertir -->
+        <!-- Text to convert -->
         <Border Grid.Row="0" Background="#181825" CornerRadius="6"
                 BorderBrush="#313244" BorderThickness="1" Margin="0,0,0,10">
             <Grid>
@@ -18,7 +18,7 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <Border Grid.Row="0" Background="#313244" CornerRadius="6,6,0,0" Padding="10,6">
-                    <TextBlock Text="TEXTO A CONVERTIR" Foreground="#89B4FA" FontSize="11"
+                    <TextBlock Text="TEXT TO CONVERT" Foreground="#89B4FA" FontSize="11"
                                FontWeight="SemiBold"/>
                 </Border>
                 <Grid Grid.Row="1" Margin="10,8">
@@ -32,7 +32,7 @@
                              Padding="8,6" FontFamily="Consolas" FontSize="14"
                              CaretBrush="#CDD6F4"
                              MaxLength="512"/>
-                    <Button Grid.Column="1" Content="Guardar WAV"
+                    <Button Grid.Column="1" Content="Save WAV"
                             Style="{StaticResource ActionButton}"
                             Margin="8,0,0,0"
                             x:Name="BtnSaveWav"
@@ -41,7 +41,7 @@
             </Grid>
         </Border>
 
-        <!-- Transcript de WAV importado -->
+        <!-- Imported WAV transcript -->
         <Border Grid.Row="1" Background="#181825" CornerRadius="6"
                 BorderBrush="#313244" BorderThickness="1" Margin="0,0,0,10">
             <Grid>
@@ -55,10 +55,10 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Grid.Column="0" CornerRadius="6,0,0,0" Padding="10,6">
-                        <TextBlock Text="TRANSCRIPCIÓN" Foreground="#A6E3A1" FontSize="11"
+                        <TextBlock Text="TRANSCRIPT" Foreground="#A6E3A1" FontSize="11"
                                    FontWeight="SemiBold"/>
                     </Border>
-                    <Button Grid.Column="1" Content="Limpiar"
+                    <Button Grid.Column="1" Content="Clear"
                             Style="{StaticResource ActionButton}"
                             Padding="10,3" FontSize="11" Margin="0,4,4,4"
                             Click="BtnClear_Click"/>
@@ -73,10 +73,10 @@
             </Grid>
         </Border>
 
-        <!-- Controles -->
+        <!-- Controls -->
         <Grid Grid.Row="2">
             <StackPanel Orientation="Horizontal">
-                <Button x:Name="BtnImportWav" Content="Importar WAV"
+                <Button x:Name="BtnImportWav" Content="Import WAV"
                         Style="{StaticResource ActionButton}"
                         Click="BtnImportWav_Click"/>
                 <TextBlock x:Name="StatusLabel" Text=""

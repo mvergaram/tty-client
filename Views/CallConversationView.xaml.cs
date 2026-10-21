@@ -39,11 +39,11 @@ public partial class CallConversationView : UserControl
         ReceivedScroller.ScrollToBottom();
     }
 
-    private void RefreshDevices() // sólo cable input (virtual)
+    private void RefreshDevices() // virtual cable (output) devices only
     {
         var devices = _injector.GetVirtualDevices();
         DeviceCombo.Items.Clear();
-        DeviceCombo.Items.Add("(ninguno / predeterminado)");
+        DeviceCombo.Items.Add("(none / default)");
         foreach (var d in devices)
             DeviceCombo.Items.Add(d);
         DeviceCombo.SelectedIndex = 0;
@@ -72,10 +72,10 @@ public partial class CallConversationView : UserControl
             _capture.Start(endpoint);
 
             StatusDot.Fill = new SolidColorBrush(Color.FromRgb(0xA6, 0xE3, 0xA1)); // green
-            StatusLabel.Text = "Escuchando";
+            StatusLabel.Text = "Listening";
             DeviceLabel.Text = _capture.DeviceName is null
                 ? "—"
-                : $"{_capture.DeviceName} · {(_capture.IsLoopback ? "loopback" : "micrófono")}";
+                : $"{_capture.DeviceName} · {(_capture.IsLoopback ? "loopback" : "microphone")}";
 
             BtnStart.IsEnabled = false;
             BtnStop.IsEnabled = true;
@@ -85,7 +85,7 @@ public partial class CallConversationView : UserControl
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error al iniciar la captura de audio:\n{ex.Message}",
+            MessageBox.Show($"Error starting audio capture:\n{ex.Message}",
                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -94,7 +94,7 @@ public partial class CallConversationView : UserControl
     {
         _capture.Stop();
         StatusDot.Fill = new SolidColorBrush(Color.FromRgb(0xF3, 0x8B, 0xA8)); // red
-        StatusLabel.Text = "Detenido";
+        StatusLabel.Text = "Stopped";
 
         BtnStart.IsEnabled = true;
         BtnStop.IsEnabled = false;
@@ -121,7 +121,7 @@ public partial class CallConversationView : UserControl
 
         // Append to received area with "GA" (Go Ahead) convention
         AppendReceived('\n');
-        foreach (char c in $"TÚ: {text}")
+        foreach (char c in $"YOU: {text}")
             AppendReceived(c);
         AppendReceived('\n');
 
@@ -152,9 +152,9 @@ public partial class CallConversationView : UserControl
     }
 
     /// <summary>
-    /// Detiene y libera los recursos de audio en vivo en un hilo de fondo, para que
-    /// MainWindow pueda esperar este método antes de cerrar la ventana sin bloquear
-    /// el hilo de UI (StopRecording/Dispose de WASAPI puede tardar en responder).
+    /// Stops and disposes the live audio resources on a background thread, so
+    /// MainWindow can await this method before closing the window without blocking
+    /// the UI thread (WASAPI StopRecording/Dispose can take a while to respond).
     /// </summary>
     public async Task ShutdownAsync()
     {
