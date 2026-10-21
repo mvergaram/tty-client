@@ -1,6 +1,6 @@
-# TTY Dynamic Client — Skype for Business
+# TTY Dynamic Client
 
-TTY/TDD software client for Windows 11 that captures Skype for Business call audio and decodes/encodes Baudot FSK tones in real time.
+TTY/TDD software client for Windows 11 that captures softphone call audio and decodes/encodes Baudot FSK tones in real time.
 
 ## Stack
 
@@ -56,12 +56,12 @@ Each interface is an independent `UserControl` with its own state (its own `FSKS
 
 ## Decoding pipeline
 
-The UI has an "Audio input" selector that lists ALL active endpoints: first the Render ones (for loopback of an SfB call playing through that device), then the Capture ones (real physical microphones/handsets, e.g. an acoustically coupled TTY). `AudioCapture.Start(AudioEndpointInfo?)` picks `WasapiLoopbackCapture` or `WasapiCapture` based on the chosen device's `DataFlow`:
+The UI has an "Audio input" selector that lists ALL active endpoints: first the Render ones (for loopback of a softphone call playing through that device), then the Capture ones (real physical microphones/handsets, e.g. an acoustically coupled TTY). `AudioCapture.Start(AudioEndpointInfo?)` picks `WasapiLoopbackCapture` or `WasapiCapture` based on the chosen device's `DataFlow`:
 
 ```
-SfB call audio (render device, loopback)        Physical microphone/handset (capture device)
-  → WasapiLoopbackCapture                          → WasapiCapture
-                    \                                /
+Softphone call audio (render device, loopback)  Physical microphone/handset (capture device)
+  → WasapiLoopbackCapture                            → WasapiCapture
+                    \                                  /
                      → Float32 → Int16 mono @8kHz (AudioResampler)
                      → Goertzel 1400 Hz / 1800 Hz, 160-sample blocks (GoertzelDetector)
                      → MARK/SPACE decision per block → BitSynchronizer (FSM)
@@ -78,7 +78,7 @@ user text
   → BaudotEncoder → List<byte> of ITA-2 codes with shifts
   → FSKSynthesizer → 16-bit PCM 8kHz (1400/1800 Hz sines at 45.45 baud)
   → VirtualMicInjector → WasapiOut on VB-Cable
-  → SfB transmits the tones as if they were the microphone's voice
+  → The softphone transmits the tones as if they were the microphone's voice
 ```
 
 ## Fixed TTY parameters
@@ -96,24 +96,15 @@ user text
 ## Environment prerequisites
 
 1. **VB-Audio Virtual Cable** installed (free driver): <https://vb-audio.com/Cable/>
-2. In Skype for Business → Audio settings → **Microphone**: select `CABLE Input (VB-Audio Virtual Cable)`
-3. The SfB call must connect to a **real PSTN number** — SfB-to-SfB calls use Silk/RTAudio, which does not preserve the FSK tones
+2. In your softphone's audio settings → **Microphone**: select `CABLE Input (VB-Audio Virtual Cable)`
+3. The call must connect to a **real PSTN number** — calls that stay within the same softphone platform often use a proprietary codec, which does not preserve the FSK tones
 4. The gateway/SIP trunk must be configured with **G.711 without transcoding**
-
-## Checking the SfB Server configuration (PowerShell)
-
-```powershell
-Get-CsVoicePolicy | Select-Object Identity, EnableTTYTDD
-Set-CsVoicePolicy -Identity "Global" -EnableTTYTDD $true
-Get-CsTrunkConfiguration | Select-Object Identity, EnableReferSupport
-```
 
 ## Known limitations
 
-- TTY audio **only works over PSTN** (G.711 required). Internal SfB-to-SfB calls are not supported.
+- TTY audio **only works over PSTN** (G.711 required). Calls that stay within the same softphone platform are not supported (they typically use a proprietary codec instead of G.711).
 - The 80-sample `AnalysisWindow` in `GoertzelDetector` is a measured trade-off between noise margin and tolerance to clock drift: longer bin-aligned windows (120, 160) decode better in noise but start failing at ±3% baud error from the transmitter, which a real gateway can produce. If changed, it must remain a multiple of 40 samples or both filters end up mistuned.
 - VB-Cable is a kernel driver; it may require IT approval in corporate environments.
-- SfB 2019 has extended support through October 2029.
 
 ## TODO
 

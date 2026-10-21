@@ -8,7 +8,7 @@ namespace TtyClient.Audio;
 
 /// <summary>
 /// Plays synthesized FSK audio to a virtual audio device (e.g. VB-Audio Virtual Cable)
-/// that Skype for Business uses as its microphone input.
+/// that a softphone uses as its microphone input.
 /// </summary>
 public class VirtualMicInjector : IDisposable
 {
@@ -32,7 +32,7 @@ public class VirtualMicInjector : IDisposable
 
     /// <summary>
     /// Plays FSK-encoded PCM bytes to the named output device.
-    /// The device should be configured as SfB's microphone via Windows Sound settings.
+    /// The device should be configured as the softphone's microphone via Windows Sound settings.
     /// Pass null to use the default communications device.
     /// </summary>
     public void Play(byte[] pcmBytes, string? deviceName = null)

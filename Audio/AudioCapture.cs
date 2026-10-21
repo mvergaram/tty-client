@@ -6,7 +6,7 @@ using NAudio.Wave;
 namespace TtyClient.Audio;
 
 /// <summary>
-/// Captures either a render device via WASAPI loopback (audio of an SfB call playing
+/// Captures either a render device via WASAPI loopback (audio of a softphone call playing
 /// through speakers/headset) or a real capture device (microphone/handset), depending
 /// on the selected AudioEndpointInfo. Defaults to the default communications render
 /// device when none is selected. Fires SamplesAvailable with resampled 16-bit mono

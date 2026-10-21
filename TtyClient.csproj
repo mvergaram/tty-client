@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <AssemblyName>TtyClient</AssemblyName>
-    <Product>TTY Dynamic Client - Skype for Business</Product>
+    <Product>TTY Dynamic Client</Product>
     <AssemblyTitle>TTY Dynamic Client</AssemblyTitle>
     <Version>1.1.0</Version>
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
