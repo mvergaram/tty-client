@@ -9,7 +9,7 @@
     <AssemblyName>TtyClient</AssemblyName>
     <Product>TTY Dynamic Client - Skype for Business</Product>
     <AssemblyTitle>TTY Dynamic Client</AssemblyTitle>
-    <Version>0.2.0</Version>
+    <Version>1.1.0</Version>
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
   </PropertyGroup>
 
