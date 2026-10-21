@@ -5,48 +5,28 @@ namespace TtyClient.TTY;
 /// <summary>
 /// Decodes Baudot ITA-2 5-bit codes to ASCII characters.
 /// Manages LTRS/FIGS shift state.
+/// Code tables live in <see cref="BaudotTables"/>, shared with <see cref="BaudotEncoder"/>.
 /// </summary>
 public class BaudotDecoder
 {
-    // ITA-2 LTRS table (index = 5-bit code, 0-31)
-    private static readonly char[] LettersTable =
-    {
-        '\0', 'E',  '\n', 'A',  ' ',  'S',  'I',  'U',
-        '\r', 'D',  'R',  'J',  'N',  'F',  'C',  'K',
-        'T',  'Z',  'L',  'W',  'H',  '\0', 'Y',  'P',
-        'Q',  'O',  'B',  'G',  '\0', 'M',  'X',  'V'
-    };
-
-    // ITA-2 FIGS table
-    private static readonly char[] FiguresTable =
-    {
-        '\0', '3',  '\n', '-',  ' ',  '\'', '8',  '7',
-        '\r', '\0', '4',  '\0', ',',  '\0', ':',  '(',
-        '5',  '"',  ')',  '2',  '#',  '\0', '6',  '0',
-        '1',  '9',  '?',  '&',  '\0', '.',  '/',  ';'
-    };
-
-    private const byte CodeLtrs = 31;
-    private const byte CodeFigs = 27;
-
     private bool _figureShift;
 
     public event Action<char>? CharacterDecoded;
 
     public void OnByte(byte code)
     {
-        if (code == CodeLtrs)
+        if (code == BaudotTables.Ltrs)
         {
             _figureShift = false;
             return;
         }
-        if (code == CodeFigs)
+        if (code == BaudotTables.Figs)
         {
             _figureShift = true;
             return;
         }
 
-        char ch = _figureShift ? FiguresTable[code] : LettersTable[code];
+        char ch = _figureShift ? BaudotTables.Figures[code] : BaudotTables.Letters[code];
         if (ch != '\0')
             CharacterDecoded?.Invoke(ch);
     }
