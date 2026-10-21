@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -18,6 +19,17 @@ public partial class CallConversationView : UserControl
     private readonly FSKSynthesizer _synth = new();
     private readonly VirtualMicInjector _injector = new();
 
+    // Naming is intentionally inverted relative to the VB-CABLE device's own name:
+    // VB-CABLE's "Output" device is this app's audio INPUT (we read from it), and
+    // VB-CABLE's "Input" device is this app's audio OUTPUT (we write to it).
+    // Prefix-only match: VB-CABLE appends a letter before the closing paren for
+    // multi-instance installs, e.g. "CABLE Output (VB-Audio Virtual Cable A)".
+    private const string VbCableInputDeviceNamePrefix = "CABLE Output (VB-Audio Virtual Cable";
+    private const string VbCableOutputDeviceNamePrefix = "CABLE Input (VB-Audio Virtual Cable";
+
+    private const string VbCableMissingWarning =
+        "For call conversation feature best results, install VB-CABLE Virtual Audio Device application from https://vb-audio.com/Cable/";
+
     public CallConversationView()
     {
         InitializeComponent();
@@ -30,6 +42,7 @@ public partial class CallConversationView : UserControl
 
         RefreshDevices();
         RefreshInputDevices();
+        EnsureVirtualCableDefaults();
     }
 
     private void AppendReceived(char ch)
@@ -60,6 +73,30 @@ public partial class CallConversationView : UserControl
 
         int idx = previousId is null ? -1 : devices.FindIndex(d => d.Id == previousId);
         InputDeviceCombo.SelectedIndex = InputDeviceCombo.Items.Count == 0 ? -1 : (idx >= 0 ? idx : 0);
+    }
+
+    /// <summary>
+    /// Checks whether the VB-CABLE virtual audio devices are installed and, for whichever
+    /// one(s) are found, selects them as the default choice in their combo box. Runs once
+    /// at startup (not on manual refresh) so it never overrides a later user selection.
+    /// Shows a single warning if either required device is missing; the app keeps running.
+    /// </summary>
+    private void EnsureVirtualCableDefaults()
+    {
+        var inputDevice = InputDeviceCombo.Items.OfType<AudioEndpointInfo>()
+            .FirstOrDefault(d => d.FriendlyName.StartsWith(VbCableInputDeviceNamePrefix, StringComparison.OrdinalIgnoreCase));
+        if (inputDevice is not null)
+            InputDeviceCombo.SelectedItem = inputDevice;
+
+        var outputDevice = DeviceCombo.Items.OfType<string>()
+            .FirstOrDefault(d => d.StartsWith(VbCableOutputDeviceNamePrefix, StringComparison.OrdinalIgnoreCase));
+        if (outputDevice is not null)
+            DeviceCombo.SelectedItem = outputDevice;
+
+        if (inputDevice is null || outputDevice is null)
+        {
+            MessageBox.Show(VbCableMissingWarning, "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     private void BtnStart_Click(object sender, RoutedEventArgs e)
