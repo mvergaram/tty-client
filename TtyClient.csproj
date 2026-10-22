@@ -9,7 +9,7 @@
     <AssemblyName>TtyClient</AssemblyName>
     <Product>TTY Dynamic Client</Product>
     <AssemblyTitle>TTY Dynamic Client</AssemblyTitle>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
   </PropertyGroup>
 
@@ -19,6 +19,17 @@
 
   <ItemGroup>
     <Resource Include="Assets\icon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TtyClient.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="TtyClient.Tests\**" />
+    <EmbeddedResource Remove="TtyClient.Tests\**" />
+    <None Remove="TtyClient.Tests\**" />
+    <Page Remove="TtyClient.Tests\**" />
   </ItemGroup>
 
 </Project>
