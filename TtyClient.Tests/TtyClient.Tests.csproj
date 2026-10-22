@@ -23,8 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\Assets\audios\*.wav">
-      <Link>Audios\%(Filename)%(Extension)</Link>
+    <None Include="Audios\*.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
