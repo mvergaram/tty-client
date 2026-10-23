@@ -5,8 +5,8 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- Text to convert -->
@@ -41,8 +41,20 @@
             </Grid>
         </Border>
 
+        <!-- Controls -->
+        <Grid Grid.Row="1" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal">
+                <Button x:Name="BtnImportWav" Content="Import WAV"
+                        Style="{StaticResource ActionButton}"
+                        Click="BtnImportWav_Click"/>
+                <TextBlock x:Name="StatusLabel" Text=""
+                           Foreground="#6C7086" FontSize="12"
+                           VerticalAlignment="Center" Margin="12,0,0,0"/>
+            </StackPanel>
+        </Grid>
+
         <!-- Imported WAV transcript -->
-        <Border Grid.Row="1" Background="#181825" CornerRadius="6"
+        <Border Grid.Row="2" Background="#181825" CornerRadius="6"
                 BorderBrush="#313244" BorderThickness="1" Margin="0,0,0,10">
             <Grid>
                 <Grid.RowDefinitions>
@@ -63,26 +75,21 @@
                             Padding="10,3" FontSize="11" Margin="0,4,4,4"
                             Click="BtnClear_Click"/>
                 </Grid>
-                <ScrollViewer Grid.Row="1" x:Name="TranscriptScroller"
+                <RichTextBox Grid.Row="1" x:Name="TranscriptBox"
+                              Background="Transparent" Foreground="#CDD6F4"
+                              BorderThickness="0" IsReadOnly="True"
+                              FontFamily="Consolas" FontSize="14"
                               VerticalScrollBarVisibility="Auto" Padding="10">
-                    <TextBlock x:Name="TranscriptText"
-                               Foreground="#CDD6F4" FontFamily="Consolas"
-                               FontSize="14" TextWrapping="Wrap"
-                               Text=""/>
-                </ScrollViewer>
+                    <RichTextBox.Resources>
+                        <Style TargetType="Paragraph">
+                            <Setter Property="Margin" Value="0"/>
+                        </Style>
+                    </RichTextBox.Resources>
+                    <FlowDocument>
+                        <Paragraph x:Name="TranscriptParagraph"/>
+                    </FlowDocument>
+                </RichTextBox>
             </Grid>
         </Border>
-
-        <!-- Controls -->
-        <Grid Grid.Row="2">
-            <StackPanel Orientation="Horizontal">
-                <Button x:Name="BtnImportWav" Content="Import WAV"
-                        Style="{StaticResource ActionButton}"
-                        Click="BtnImportWav_Click"/>
-                <TextBlock x:Name="StatusLabel" Text=""
-                           Foreground="#6C7086" FontSize="12"
-                           VerticalAlignment="Center" Margin="12,0,0,0"/>
-            </StackPanel>
-        </Grid>
     </Grid>
 </UserControl>

@@ -1,4 +1,4 @@
-# TTY Dynamic Client
+# TTY Client
 
 TTY/TDD software client for Windows 11 that captures softphone call audio and decodes/encodes Baudot FSK tones in real time.
 

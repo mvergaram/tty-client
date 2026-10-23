@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using TtyClient.Audio;
 using TtyClient.TTY;
 
@@ -11,6 +12,8 @@ public partial class AudioFilesView : UserControl
 {
     private readonly FSKSynthesizer _synth = new();
 
+    private Run? _lastRun;
+
     public AudioFilesView()
     {
         InitializeComponent();
@@ -19,8 +22,24 @@ public partial class AudioFilesView : UserControl
     private void AppendTranscript(char ch)
     {
         if (ch == '\r') return;
-        TranscriptText.Text += ch;
-        TranscriptScroller.ScrollToBottom();
+
+        if (ch == '\n')
+        {
+            // A Run's Text is verbatim — unlike TextBlock.Text, it never turns an
+            // embedded '\n' into a visible line break, so this needs an explicit Inline.
+            TranscriptParagraph.Inlines.Add(new LineBreak());
+            _lastRun = null;
+            TranscriptBox.ScrollToEnd();
+            return;
+        }
+
+        if (_lastRun is null)
+        {
+            _lastRun = new Run();
+            TranscriptParagraph.Inlines.Add(_lastRun);
+        }
+        _lastRun.Text += ch;
+        TranscriptBox.ScrollToEnd();
     }
 
     private void BtnSaveWav_Click(object sender, RoutedEventArgs e)
@@ -84,6 +103,7 @@ public partial class AudioFilesView : UserControl
 
     private void BtnClear_Click(object sender, RoutedEventArgs e)
     {
-        TranscriptText.Text = "";
+        TranscriptParagraph.Inlines.Clear();
+        _lastRun = null;
     }
 }

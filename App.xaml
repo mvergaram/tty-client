@@ -61,6 +61,35 @@
             </Setter>
         </Style>
 
+        <Style TargetType="Button" x:Key="StopButton">
+            <Setter Property="Background" Value="#F38BA8"/>
+            <Setter Property="Foreground" Value="#1E1E2E"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="20,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F5A3BC"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Items in a ComboBox's open dropdown render on the system's light popup
              background, so they need their own dark/black foreground — the lavender
              foreground used for the closed box would look washed-out/gray there. -->
@@ -91,15 +120,14 @@
                             <TextBlock x:Name="Txt" Text="{TemplateBinding Header}"
                                        Foreground="#6C7086" FontSize="13" FontWeight="SemiBold"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                                       Padding="0,10"/>
+                                       Padding="16,10"/>
                         </Border>
                         <ControlTemplate.Triggers>
+                            <!-- Only IsSelected drives the color — intentionally no IsMouseOver
+                                 trigger here, so the tab's color never changes from hovering. -->
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="#89B4FA"/>
                                 <Setter TargetName="Txt" Property="Foreground" Value="#1E1E2E"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#45475A"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

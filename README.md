@@ -1,4 +1,4 @@
-# TTY Dynamic Client
+# TTY Client
 
 [![Release](https://github.com/mvergaram/tty-client/actions/workflows/release.yml/badge.svg)](https://github.com/mvergaram/tty-client/actions/workflows/release.yml)
 

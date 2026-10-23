@@ -5,7 +5,6 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -30,28 +29,8 @@
             </Grid>
         </Border>
 
-        <!-- Status bar -->
-        <Border Grid.Row="1" Background="#313244" CornerRadius="6"
-                Padding="12,8" Margin="0,0,0,12">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Orientation="Horizontal">
-                    <Ellipse x:Name="StatusDot" Width="10" Height="10"
-                             Fill="#F38BA8" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBlock x:Name="StatusLabel" Text="Stopped"
-                               Foreground="#CDD6F4" FontSize="13" VerticalAlignment="Center"/>
-                </StackPanel>
-                <TextBlock x:Name="DeviceLabel" Grid.Column="1"
-                           Text="—" Foreground="#6C7086" FontSize="12"
-                           VerticalAlignment="Center"/>
-            </Grid>
-        </Border>
-
         <!-- Received text -->
-        <Border Grid.Row="2" Background="#181825" CornerRadius="6"
+        <Border Grid.Row="1" Background="#181825" CornerRadius="6"
                 BorderBrush="#313244" BorderThickness="1" Margin="0,0,0,10">
             <Grid>
                 <Grid.RowDefinitions>
@@ -90,7 +69,7 @@
         </Border>
 
         <!-- Send area -->
-        <Border Grid.Row="3" Background="#181825" CornerRadius="6"
+        <Border Grid.Row="2" Background="#181825" CornerRadius="6"
                 BorderBrush="#313244" BorderThickness="1" Margin="0,0,0,10">
             <Grid>
                 <Grid.RowDefinitions>
@@ -124,7 +103,7 @@
         </Border>
 
         <!-- Output device selector -->
-        <Border Grid.Row="4" Background="#313244" CornerRadius="6"
+        <Border Grid.Row="3" Background="#313244" CornerRadius="6"
                 Padding="12,8" Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -141,20 +120,14 @@
         </Border>
 
         <!-- Controls -->
-        <Grid Grid.Row="5">
+        <Grid Grid.Row="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button x:Name="BtnStop" Content="Stop"
-                        Style="{StaticResource ActionButton}"
-                        Margin="0,0,8,0" Click="BtnStop_Click"
-                        IsEnabled="False"/>
-                <Button x:Name="BtnStart" Content="Start listening"
-                        Style="{StaticResource SendButton}"
-                        Click="BtnStart_Click"/>
-            </StackPanel>
+            <Button Grid.Column="1" x:Name="BtnListen" Content="Start listening"
+                    Style="{StaticResource SendButton}"
+                    Click="BtnListen_Click"/>
         </Grid>
     </Grid>
 </UserControl>

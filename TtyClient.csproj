@@ -7,9 +7,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <AssemblyName>TtyClient</AssemblyName>
-    <Product>TTY Dynamic Client</Product>
-    <AssemblyTitle>TTY Dynamic Client</AssemblyTitle>
-    <Version>1.2.0</Version>
+    <Product>TTY Client</Product>
+    <AssemblyTitle>TTY Client</AssemblyTitle>
+    <Version>1.3.0</Version>
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
   </PropertyGroup>
 
