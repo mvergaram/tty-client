@@ -41,7 +41,7 @@ In other words: everything this app plays to **"CABLE Input"** (which Windows se
 Concrete flow in this app:
 
 1. The user types a message and the app encodes it as FSK tones (Baudot ITA-2).
-2. The app plays those tones to **CABLE Input** (the "Audio output" device in the UI).
+2. The app plays those tones to **CABLE Input** (the "Sending TTY codes to" device in the UI).
 3. VB-CABLE forwards that signal to **CABLE Output**.
 4. In your softphone, configured with **CABLE Output** as its microphone, the tones are transmitted as if they were the user's voice.
 
@@ -49,7 +49,7 @@ Concrete flow in this app:
 
 1. Download and install VB-CABLE from <https://vb-audio.com/Cable/>.
 2. In your softphone's audio settings → **Microphone**: select `CABLE Output (VB-Audio Virtual Cable)`.
-3. In the app, in the **"Audio output"** selector, choose `CABLE Input (VB-Audio Virtual Cable)`.
+3. In the app, in the **"Sending TTY codes to"** selector, choose `CABLE Input (VB-Audio Virtual Cable)`.
 4. The call must connect to a **real PSTN number** with the gateway/SIP trunk set to **G.711 without transcoding** — calls that stay within the same softphone platform often use a proprietary codec and don't preserve the FSK tones.
 
 > VB-CABLE is a kernel driver; it may require IT approval in corporate environments.
@@ -58,14 +58,14 @@ Once installed, VB-CABLE adds the **CABLE Input** (playback) and **CABLE Output*
 
 ![VB-CABLE Input and Output devices in Windows Sound settings](readme_images/vb_cable_devices.png)
 
-Side-by-side device configuration — TTY Client's "Audio input"/"Audio output" selectors on the left, the softphone's (Skype Business) microphone/speaker settings on the right:
+Side-by-side device configuration — TTY Client's "Hearing TTY codes from"/"Sending TTY codes to" selectors on the left, the softphone's microphone/speaker settings on the right:
 
-![TTY Client and Skype Business device configuration side by side](readme_images/tty_and_skype_config.png)
+![TTY Client and softphone device configuration side by side](readme_images/tty_and_skype_config.png)
 
 ## Build and run
 
 ```bash
-dotnet build
+# `dotnet run` builds automatically, so a separate `dotnet build` isn't needed
 dotnet run
 ```
 
@@ -76,5 +76,7 @@ dotnet publish TtyClient.csproj -c Release -r win-x64 --self-contained true -p:P
 ```
 
 The resulting `.exe` ends up at `bin\Release\net10.0-windows\win-x64\publish\TtyClient.exe`.
+
+A GitHub Actions workflow (`.github/workflows/release.yml`) runs this exact command automatically on every push to `main` and publishes the resulting `.exe` as a GitHub Release (see the badge at the top of this file) — running it manually like above is only needed for local testing.
 
 More details on architecture, the audio pipeline, and TTY parameters in [`CLAUDE.md`](CLAUDE.md).
