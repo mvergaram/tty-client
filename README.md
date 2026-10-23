@@ -4,7 +4,9 @@
 
 TTY/TDD software client for Windows 11 that captures softphone call audio and decodes/encodes Baudot FSK tones in real time.
 
-![TTY Client app screenshot](readme_images/app_screenshot.png)
+![TTY Client app screenshot 1](readme_images/app_screenshot1.png)
+
+![TTY Client app screenshot 2](readme_images/app_screenshot2.png)
 
 ## TTY Protocol
 
@@ -45,7 +47,7 @@ Concrete flow in this app:
 3. VB-CABLE forwards that signal to **CABLE Output**.
 4. In your softphone, configured with **CABLE Output** as its microphone, the tones are transmitted as if they were the user's voice.
 
-### Installation and setup
+## Installation and setup
 
 1. Download and install VB-CABLE from <https://vb-audio.com/Cable/>.
 2. In your softphone's audio settings → **Microphone**: select `CABLE Output (VB-Audio Virtual Cable)`.
@@ -69,6 +71,14 @@ Side-by-side device configuration — TTY Client's "Hearing TTY codes from"/"Sen
 dotnet run
 ```
 
+Run the test suite (`TtyClient.Tests`, xUnit) with:
+
+```bash
+dotnet test TtyClient.Tests/TtyClient.Tests.csproj
+```
+
+The release workflow (below) runs this same command before publishing, so a failing test blocks the release.
+
 ## Publish a standalone executable
 
 ```bash
@@ -76,6 +86,8 @@ dotnet publish TtyClient.csproj -c Release -r win-x64 --self-contained true -p:P
 ```
 
 The resulting `.exe` ends up at `bin\Release\net10.0-windows\win-x64\publish\TtyClient.exe`.
+
+## GitHub build and release
 
 A GitHub Actions workflow (`.github/workflows/release.yml`) runs this exact command automatically on every push to `main` and publishes the resulting `.exe` as a GitHub Release (see the badge at the top of this file) — running it manually like above is only needed for local testing.
 
