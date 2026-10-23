@@ -5,14 +5,33 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Status bar -->
+        <!-- Input device selector -->
         <Border Grid.Row="0" Background="#313244" CornerRadius="6"
+                Padding="12,8" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Hearing TTY codes from:" Foreground="#6C7086"
+                           FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <ComboBox x:Name="InputDeviceCombo" Grid.Column="1"
+                          Background="#1E1E2E" Foreground="Black"
+                          BorderBrush="#45475A" FontSize="12"
+                          Padding="6,4" DisplayMemberPath="DisplayName"
+                          SelectionChanged="InputDeviceCombo_SelectionChanged"/>
+            </Grid>
+        </Border>
+
+        <!-- Status bar -->
+        <Border Grid.Row="1" Background="#313244" CornerRadius="6"
                 Padding="12,8" Margin="0,0,0,12">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -32,7 +51,7 @@
         </Border>
 
         <!-- Received text -->
-        <Border Grid.Row="1" Background="#181825" CornerRadius="6"
+        <Border Grid.Row="2" Background="#181825" CornerRadius="6"
                 BorderBrush="#313244" BorderThickness="1" Margin="0,0,0,10">
             <Grid>
                 <Grid.RowDefinitions>
@@ -53,18 +72,25 @@
                             Padding="10,3" FontSize="11" Margin="0,4,4,4"
                             Click="BtnClear_Click"/>
                 </Grid>
-                <ScrollViewer Grid.Row="1" x:Name="ReceivedScroller"
+                <RichTextBox Grid.Row="1" x:Name="ReceivedBox"
+                              Background="Transparent" Foreground="#CDD6F4"
+                              BorderThickness="0" IsReadOnly="True"
+                              FontFamily="Consolas" FontSize="14"
                               VerticalScrollBarVisibility="Auto" Padding="10">
-                    <TextBlock x:Name="ReceivedText"
-                               Foreground="#CDD6F4" FontFamily="Consolas"
-                               FontSize="14" TextWrapping="Wrap"
-                               Text=""/>
-                </ScrollViewer>
+                    <RichTextBox.Resources>
+                        <Style TargetType="Paragraph">
+                            <Setter Property="Margin" Value="0"/>
+                        </Style>
+                    </RichTextBox.Resources>
+                    <FlowDocument>
+                        <Paragraph x:Name="ReceivedParagraph"/>
+                    </FlowDocument>
+                </RichTextBox>
             </Grid>
         </Border>
 
         <!-- Send area -->
-        <Border Grid.Row="2" Background="#181825" CornerRadius="6"
+        <Border Grid.Row="3" Background="#181825" CornerRadius="6"
                 BorderBrush="#313244" BorderThickness="1" Margin="0,0,0,10">
             <Grid>
                 <Grid.RowDefinitions>
@@ -97,46 +123,25 @@
             </Grid>
         </Border>
 
-        <!-- Device selectors -->
-        <Border Grid.Row="3" Background="#313244" CornerRadius="6"
+        <!-- Output device selector -->
+        <Border Grid.Row="4" Background="#313244" CornerRadius="6"
                 Padding="12,8" Margin="0,0,0,10">
             <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Audio input:" Foreground="#6C7086"
+                <TextBlock Grid.Column="0" Text="Sending TTY codes to:" Foreground="#6C7086"
                            FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <ComboBox x:Name="InputDeviceCombo" Grid.Row="0" Grid.Column="1"
+                <ComboBox x:Name="DeviceCombo" Grid.Column="1"
                           Background="#1E1E2E" Foreground="Black"
                           BorderBrush="#45475A" FontSize="12"
-                          Padding="6,4" DisplayMemberPath="DisplayName"/>
-                <Button x:Name="BtnRefreshInputDevices" Grid.Row="0" Grid.Column="2" Content="Refresh"
-                        Style="{StaticResource ActionButton}"
-                        Margin="8,0,0,0" FontSize="12"
-                        Click="BtnRefreshInputDevices_Click"/>
-
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Audio output:" Foreground="#6C7086"
-                           FontSize="12" VerticalAlignment="Center" Margin="0,8,8,0"/>
-                <ComboBox x:Name="DeviceCombo" Grid.Row="1" Grid.Column="1"
-                          Background="#1E1E2E" Foreground="Black"
-                          BorderBrush="#45475A" FontSize="12"
-                          Padding="6,4" Margin="0,8,0,0"/>
-                <Button Grid.Row="1" Grid.Column="2" Content="Refresh"
-                        Style="{StaticResource ActionButton}"
-                        Margin="8,8,0,0" FontSize="12"
-                        Click="BtnRefreshDevices_Click"/>
+                          Padding="6,4"/>
             </Grid>
         </Border>
 
         <!-- Controls -->
-        <Grid Grid.Row="4">
+        <Grid Grid.Row="5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>

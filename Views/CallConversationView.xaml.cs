@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using TtyClient.Audio;
@@ -12,12 +13,24 @@ namespace TtyClient.Views;
 
 public partial class CallConversationView : UserControl
 {
+    private static readonly Brush ReceivedBrush = FreezeBrush(0xA6, 0xE3, 0xA1); // matches the "RECEIVED" header
+    private static readonly Brush SentBrush = FreezeBrush(0x89, 0xB4, 0xFA); // matches the "SEND" header
+
+    private static Brush FreezeBrush(byte r, byte g, byte b)
+    {
+        var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+        brush.Freeze();
+        return brush;
+    }
+
     private readonly AudioCapture _capture = new();
     private readonly GoertzelDetector _goertzel = new();
     private readonly BitSynchronizer _sync = new();
     private readonly BaudotDecoder _decoder = new();
     private readonly FSKSynthesizer _synth = new();
     private readonly VirtualMicInjector _injector = new();
+
+    private Run? _lastRun;
 
     // Naming is intentionally inverted relative to the VB-CABLE device's own name:
     // VB-CABLE's "Output" device is this app's audio INPUT (we read from it), and
@@ -45,11 +58,28 @@ public partial class CallConversationView : UserControl
         EnsureVirtualCableDefaults();
     }
 
-    private void AppendReceived(char ch)
+    private void AppendReceived(char ch, bool isSent = false)
     {
         if (ch == '\r') return;
-        ReceivedText.Text += ch;
-        ReceivedScroller.ScrollToBottom();
+
+        if (ch == '\n')
+        {
+            // A Run's Text is verbatim — unlike TextBlock.Text, it never turns an
+            // embedded '\n' into a visible line break, so this needs an explicit Inline.
+            ReceivedParagraph.Inlines.Add(new LineBreak());
+            _lastRun = null;
+            ReceivedBox.ScrollToEnd();
+            return;
+        }
+
+        var brush = isSent ? SentBrush : ReceivedBrush;
+        if (_lastRun is null || _lastRun.Foreground != brush)
+        {
+            _lastRun = new Run { Foreground = brush };
+            ReceivedParagraph.Inlines.Add(_lastRun);
+        }
+        _lastRun.Text += ch;
+        ReceivedBox.ScrollToEnd();
     }
 
     private void RefreshDevices() // virtual cable (output) devices only
@@ -99,7 +129,9 @@ public partial class CallConversationView : UserControl
         }
     }
 
-    private void BtnStart_Click(object sender, RoutedEventArgs e)
+    private void BtnStart_Click(object sender, RoutedEventArgs e) => StartCapture();
+
+    private void StartCapture()
     {
         try
         {
@@ -117,8 +149,6 @@ public partial class CallConversationView : UserControl
             BtnStart.IsEnabled = false;
             BtnStop.IsEnabled = true;
             BtnSend.IsEnabled = true;
-            InputDeviceCombo.IsEnabled = false;
-            BtnRefreshInputDevices.IsEnabled = false;
         }
         catch (Exception ex)
         {
@@ -136,8 +166,13 @@ public partial class CallConversationView : UserControl
         BtnStart.IsEnabled = true;
         BtnStop.IsEnabled = false;
         BtnSend.IsEnabled = false;
-        InputDeviceCombo.IsEnabled = true;
-        BtnRefreshInputDevices.IsEnabled = true;
+    }
+
+    private void InputDeviceCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        // Only hot-swap if we're already listening; otherwise the user still has to
+        // press "Start listening" explicitly, same as picking a device for the first time.
+        if (_capture.IsCapturing) StartCapture();
     }
 
     private void BtnSend_Click(object sender, RoutedEventArgs e) => SendText();
@@ -157,10 +192,10 @@ public partial class CallConversationView : UserControl
         if (string.IsNullOrEmpty(text)) return;
 
         // Append to received area with "GA" (Go Ahead) convention
-        AppendReceived('\n');
+        AppendReceived('\n', isSent: true);
         foreach (char c in $"YOU: {text}")
-            AppendReceived(c);
-        AppendReceived('\n');
+            AppendReceived(c, isSent: true);
+        AppendReceived('\n', isSent: true);
 
         var codes = BaudotEncoder.Encode(text);
         byte[] audio = _synth.Synthesize(codes);
@@ -175,17 +210,8 @@ public partial class CallConversationView : UserControl
 
     private void BtnClear_Click(object sender, RoutedEventArgs e)
     {
-        ReceivedText.Text = "";
-    }
-
-    private void BtnRefreshDevices_Click(object sender, RoutedEventArgs e)
-    {
-        RefreshDevices();
-    }
-
-    private void BtnRefreshInputDevices_Click(object sender, RoutedEventArgs e)
-    {
-        RefreshInputDevices();
+        ReceivedParagraph.Inlines.Clear();
+        _lastRun = null;
     }
 
     /// <summary>

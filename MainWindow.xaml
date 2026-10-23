@@ -16,7 +16,13 @@
                        Foreground="#CDD6F4" VerticalAlignment="Center"/>
         </StackPanel>
 
-        <TabControl Background="Transparent" BorderThickness="0" Padding="0">
+        <TabControl Background="Transparent" BorderThickness="0" Padding="0"
+                    ItemContainerStyle="{StaticResource SegmentedTab}">
+            <TabControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Rows="1" Columns="2"/>
+                </ItemsPanelTemplate>
+            </TabControl.ItemsPanel>
             <TabItem Header="Call Conversation">
                 <views:CallConversationView x:Name="CallView" Margin="12"/>
             </TabItem>

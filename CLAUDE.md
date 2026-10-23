@@ -106,6 +106,18 @@ user text
 - The 80-sample `AnalysisWindow` in `GoertzelDetector` is a measured trade-off between noise margin and tolerance to clock drift: longer bin-aligned windows (120, 160) decode better in noise but start failing at ±3% baud error from the transmitter, which a real gateway can produce. If changed, it must remain a multiple of 40 samples or both filters end up mistuned.
 - VB-Cable is a kernel driver; it may require IT approval in corporate environments.
 
+## Maintenance of related materials
+
+Whenever a change modifies the app's UI (views in `Views/`, styles in `App.xaml`, etc.), ask the user
+before finishing the task whether the following should also be updated:
+- Screenshots in `README.md` (if any exist and show the part of the UI that changed).
+- Screenshots in `presentation/screenshots/` and, if relevant, the related content in the generator
+  script `presentation/_build/generar_presentacion.py` (the `shot_call`/`shot_files` slides in the PPTX
+  and the images embedded in the presenter guide DOCX).
+
+Do not update these materials automatically without confirming first — they are external deliverables
+(demos, presenter guides) that don't always need to stay in sync with every minor visual change.
+
 ## TODO
 
 - [x] ~~Investigate why the app hangs (becomes unresponsive) if it's listening and the window is closed (X).~~ Fixed: `MainWindow.Window_Closing` cancels the close, awaits `CallConversationView.ShutdownAsync()` (which does `_capture.Dispose()`/`_injector.Dispose()` inside a `Task.Run`, off the UI thread), and only then closes the window.

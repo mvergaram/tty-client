@@ -9,7 +9,7 @@
     <AssemblyName>TtyClient</AssemblyName>
     <Product>TTY Dynamic Client</Product>
     <AssemblyTitle>TTY Dynamic Client</AssemblyTitle>
-    <Version>1.1.1</Version>
+    <Version>1.2.0</Version>
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
   </PropertyGroup>
 

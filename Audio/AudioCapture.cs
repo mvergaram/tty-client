@@ -38,7 +38,7 @@ public class AudioCapture : IDisposable
 
     public void Start(AudioEndpointInfo? endpoint = null)
     {
-        if (IsCapturing) return;
+        Stop(); // release any device already bound before (re)binding, e.g. when switching devices live
 
         using var enumerator = new MMDeviceEnumerator();
         MMDevice? device = null;
@@ -94,6 +94,8 @@ public class AudioCapture : IDisposable
     {
         if (!IsCapturing) return;
         _capture?.StopRecording();
+        _capture?.Dispose();
+        _capture = null;
         IsCapturing = false;
     }
 

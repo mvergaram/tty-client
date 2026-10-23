@@ -79,5 +79,32 @@
                 <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}" Color="Black"/>
             </Style.Resources>
         </Style>
+
+        <!-- Flat 50/50 segmented look for the top-level TabControl, replacing the default
+             OS tab chrome. Pair with a UniformGrid Columns="2" ItemsPanel so each TabItem
+             always takes exactly half the TabControl's width. -->
+        <Style TargetType="TabItem" x:Key="SegmentedTab">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Bd" Background="#313244" CornerRadius="4" Margin="2,0,2,8">
+                            <TextBlock x:Name="Txt" Text="{TemplateBinding Header}"
+                                       Foreground="#6C7086" FontSize="13" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Padding="0,10"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#89B4FA"/>
+                                <Setter TargetName="Txt" Property="Foreground" Value="#1E1E2E"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#45475A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Application.Resources>
 </Application>
