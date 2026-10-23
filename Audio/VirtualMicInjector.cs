@@ -24,11 +24,14 @@ public class VirtualMicInjector : IDisposable
         var devices = enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
         return devices
             .Select(d => d.FriendlyName)
-            .Where(n => n.Contains("CABLE", StringComparison.OrdinalIgnoreCase)
-                     || n.Contains("Virtual", StringComparison.OrdinalIgnoreCase)
-                     || n.Contains("VB-Audio", StringComparison.OrdinalIgnoreCase))
+            .Where(IsVirtualAudioDeviceName)
             .ToList();
     }
+
+    internal static bool IsVirtualAudioDeviceName(string name) =>
+        name.Contains("CABLE", StringComparison.OrdinalIgnoreCase)
+        || name.Contains("Virtual", StringComparison.OrdinalIgnoreCase)
+        || name.Contains("VB-Audio", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Plays FSK-encoded PCM bytes to the named output device.

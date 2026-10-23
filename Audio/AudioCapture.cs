@@ -76,7 +76,7 @@ public class AudioCapture : IDisposable
         IsCapturing = true;
     }
 
-    private static void EnsureSupportedFormat(WaveFormat wf, string deviceName)
+    internal static void EnsureSupportedFormat(WaveFormat wf, string deviceName)
     {
         bool isFloat32 =
             wf.BitsPerSample == 32 &&

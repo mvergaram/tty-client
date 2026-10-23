@@ -10,7 +10,7 @@ TTY/TDD software client for Windows 11 that captures softphone call audio and de
 
 ## TTY Protocol
 
-This app implements the **US Weitbrecht TTY/TDD standard**, the protocol used by TTY devices over the telephone network in the United States:
+This app implements the [**US Weitbrecht TTY/TDD standard**](https://en.wikipedia.org/wiki/Telecommunications_device_for_the_deaf#Original_5-bit_Baudot_code), the protocol used by TTY devices over the telephone network in the United States:
 
 - **Modulation**: audio-frequency FSK (Frequency-Shift Keying)
 - **MARK frequency**: 1400 Hz (binary 1 / idle tone)
@@ -20,9 +20,13 @@ This app implements the **US Weitbrecht TTY/TDD standard**, the protocol used by
 - **Frame structure**: 1 START bit (SPACE) + 5 DATA bits (LSB first) + 1.5 STOP bits (MARK)
 - **Sample rate**: 8000 Hz internally, matching standard telephony audio
 
-Decoding measures tone power at 1400 Hz and 1800 Hz with the Goertzel algorithm over short, overlapping windows, then reconstructs each character by locking onto its own start-bit edge instead of free-running a block counter — this keeps bit sampling correctly aligned even though the gap between characters (stop bits, a human typist's pauses) isn't a fixed length.
+Decoding measures tone power at 1400 Hz and 1800 Hz with the [Goertzel algorithm](https://en.wikipedia.org/wiki/Goertzel_algorithm) over short, overlapping windows, then reconstructs each character by locking onto its own start-bit edge instead of free-running a block counter — this keeps bit sampling correctly aligned even though the gap between characters (stop bits, a human typist's pauses) isn't a fixed length.
 
-TTY tones only survive a call path that doesn't transcode or compress the audio, which is why this only works over a real PSTN call with G.711 (see [Installation and setup](#installation-and-setup) below) — calls that stay within the same softphone platform often use a proprietary codec and strip the tones out.
+#### Noise
+
+Noise on the line is handled in three ways. First, each bit decision is a *relative* comparison — whichever of the two tones (1400 Hz vs. 1800 Hz) carries more power wins — rather than a fixed energy threshold that line noise could trip or mask. Second, the 80-sample (10 ms) analysis window was tuned empirically against a real TTY recording with added white noise: it decodes about 3 dB further into the noise floor than a shorter window, while still tolerating the clock drift a real gateway introduces (longer windows reject noise even better but start missing bits once transmitter/receiver clocks drift more than a few percent). Third, the bit synchronizer treats a start-bit edge as a candidate, not a certainty — if a noise spike doesn't hold steady through the start bit's own center, it's dismissed as a false trigger and the receiver goes back to idle instead of decoding a spurious character.
+
+TTY tones only survive a call path that doesn't transcode or compress the audio, which is why this only works over a real PSTN (Public Switched Telephone Network) call with [G.711](https://en.wikipedia.org/wiki/G.711) (see [Installation and setup](#installation-and-setup) below) — calls that stay within the same softphone platform often use a proprietary codec and strip the tones out.
 
 See [`CLAUDE.md`](CLAUDE.md) for the fixed-parameters table and the full decode/encode pipeline diagrams.
 
