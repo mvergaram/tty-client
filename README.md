@@ -1,6 +1,10 @@
 # TTY Dynamic Client
 
+[![Release](https://github.com/mvergaram/tty-client/actions/workflows/release.yml/badge.svg)](https://github.com/mvergaram/tty-client/actions/workflows/release.yml)
+
 TTY/TDD software client for Windows 11 that captures softphone call audio and decodes/encodes Baudot FSK tones in real time.
+
+![TTY Client app screenshot](readme_images/app_screenshot.png)
 
 ## TTY Protocol
 
@@ -49,6 +53,14 @@ Concrete flow in this app:
 4. The call must connect to a **real PSTN number** with the gateway/SIP trunk set to **G.711 without transcoding** — calls that stay within the same softphone platform often use a proprietary codec and don't preserve the FSK tones.
 
 > VB-CABLE is a kernel driver; it may require IT approval in corporate environments.
+
+Once installed, VB-CABLE adds the **CABLE Input** (playback) and **CABLE Output** (recording) devices to Windows' Sound settings:
+
+![VB-CABLE Input and Output devices in Windows Sound settings](readme_images/vb_cable_devices.png)
+
+Side-by-side device configuration — TTY Client's "Audio input"/"Audio output" selectors on the left, the softphone's (Skype Business) microphone/speaker settings on the right:
+
+![TTY Client and Skype Business device configuration side by side](readme_images/tty_and_skype_config.png)
 
 ## Build and run
 
