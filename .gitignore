@@ -43,4 +43,9 @@ $RECYCLE.BIN/
 # Local Claude Code configuration (do not share across machines)
 .claude/settings.local.json
 CLAUDE.local.md
+
+# local presentation for demo
 /presentation
+
+# audacity script for tty code generator
+nyquist TTY audio script for audacity.txt
