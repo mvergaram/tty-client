@@ -68,10 +68,11 @@ public partial class AudioFilesView : UserControl
         };
         if (dlg.ShowDialog() != true) return;
 
-        var goertzel = new GoertzelDetector();
+        var goertzel = new GoertzelDetector(App.Settings.IdleHopsThreshold);
         var sync = new BitSynchronizer();
         var decoder = new BaudotDecoder();
         goertzel.BitDetected += sync.OnBit;
+        goertzel.LineIdle += () => { sync.Reset(); decoder.Reset(); };
         sync.CharacterReceived += decoder.OnByte;
         decoder.CharacterDecoded += ch => Dispatcher.Invoke(() => AppendTranscript(ch));
 

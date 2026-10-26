@@ -81,6 +81,39 @@ public class FSKSynthesizerTests
     }
 
     [Fact]
+    public void RepeatedPlaybackEndingInFigs_WithoutTrailingLtrs_DoesNotCorruptNextMessage()
+    {
+        // BaudotEncoder always appends a trailing LTRS, so this never happens via the app's own
+        // encoder - but a real remote TTY/relay can end a turn in FIGS (e.g. "...") without
+        // shifting back, exactly like the user-reported recording. Strip the encoder's own
+        // trailing LTRS to simulate that.
+        var firstMessageCodes = BaudotEncoder.Encode("CALL 911");
+        firstMessageCodes.RemoveAt(firstMessageCodes.Count - 1);
+        var firstMessageSamples = ToSamples(new FSKSynthesizer().Synthesize(firstMessageCodes));
+
+        var secondMessageSamples = ToSamples(new FSKSynthesizer().Synthesize(BaudotEncoder.Encode("HELLO")));
+
+        // Comfortably over the ~1s idle threshold - mirrors the silent gap between two "plays".
+        var silence = new short[16000];
+
+        var goertzel = new GoertzelDetector();
+        var sync = new BitSynchronizer();
+        var decoder = new BaudotDecoder();
+        var sb = new StringBuilder();
+        goertzel.BitDetected += sync.OnBit;
+        goertzel.LineIdle += () => { sync.Reset(); decoder.Reset(); };
+        sync.CharacterReceived += decoder.OnByte;
+        decoder.CharacterDecoded += ch => sb.Append(ch);
+
+        goertzel.ProcessSamples(firstMessageSamples, firstMessageSamples.Length);
+        goertzel.ProcessSamples(silence, silence.Length);
+        sb.Clear(); // only the second message's decode matters here
+        goertzel.ProcessSamples(secondMessageSamples, secondMessageSamples.Length);
+
+        Assert.Equal("HELLO", sb.ToString());
+    }
+
+    [Fact]
     public void Synthesize_CodeWithBitsAboveFive_IsTruncatedToLowFiveBits()
     {
         var withHighBits = new FSKSynthesizer().Synthesize(new List<byte> { 0b1110_0011 });

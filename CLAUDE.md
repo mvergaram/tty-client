@@ -39,7 +39,7 @@ tty-client/
 │   ├── VirtualMicInjector.cs  # Plays FSK to VB-Cable or another virtual device (always Render)
 │   └── WavFileHandler.cs      # SaveToWav/LoadSamples: PCM 16-bit@8kHz ↔ .wav file (NAudio)
 ├── TTY/
-│   ├── GoertzelDetector.cs    # Power @ 1400 Hz vs 1800 Hz, 20ms blocks (160 samples)
+│   ├── GoertzelDetector.cs    # Power @ 1400 Hz vs 1800 Hz, 10ms window oversampled 4x/bit; squelches sub-noise-floor hops and raises LineIdle after a configurable run of silence
 │   ├── BitSynchronizer.cs     # FSM: IDLE → START_BIT → DATA_BITS(5) → STOP_BIT
 │   ├── BaudotDecoder.cs       # ITA-2 5-bit → char, manages LTRS/FIGS shift
 │   ├── BaudotEncoder.cs       # text → List<byte> of ITA-2 codes with shifts
@@ -47,8 +47,10 @@ tty-client/
 ├── Views/
 │   ├── CallConversationView.xaml(.cs)  # Live call interface: input/output devices, start/stop listening, send text via virtual microphone
 │   └── AudioFilesView.xaml(.cs)        # Files interface: text → WAV ("Save WAV") and WAV → text ("Import WAV")
-├── MainWindow.xaml             # Shell: header + TabControl hosting the two views (dark Catppuccin theme in App.xaml)
-├── MainWindow.xaml.cs          # Closes the window safely, awaiting CallConversationView.ShutdownAsync()
+├── AppSettings.cs              # Persisted user settings (JSON in %AppData%\TtyClient\settings.json) — currently just IdleHopsThreshold
+├── SettingsWindow.xaml(.cs)    # Modal settings dialog opened from MainWindow's gear button
+├── MainWindow.xaml             # Shell: header (title + settings gear button) + TabControl hosting the two views (dark Catppuccin theme in App.xaml)
+├── MainWindow.xaml.cs          # Opens SettingsWindow; closes the window safely, awaiting CallConversationView.ShutdownAsync()
 └── TtyClient.csproj
 ```
 
@@ -71,6 +73,8 @@ Softphone call audio (render device, loopback)  Physical microphone/handset (cap
 
 Both paths require float32 input format (`AudioCapture.EnsureSupportedFormat`); if the device provides another format, a clear error is raised instead of decoding garbage.
 
+`GoertzelDetector` doesn't trust a MARK/SPACE decision when neither tone's power clears a noise floor — there's no real carrier, just line noise or silence, and feeding that into `BitSynchronizer` risks fabricating a byte that happens to land on the FIGS or LTRS shift code. After enough consecutive silent hops (`LineIdle`, see [Settings](#settings)) it resets `BitSynchronizer`/`BaudotDecoder` back to LTRS instead. This is what lets the decoder recover between TTY turns without the remote end having to resend LTRS — e.g. a message that ends in "..." (FIGS) and is replayed again afterward.
+
 ## Encoding pipeline (sending)
 
 ```
@@ -92,6 +96,23 @@ user text
 | Hop between decisions | 44 samples | GoertzelDetector (1/4 bit, `OversampleFactor` = 4) |
 | Analysis window | 80 samples | GoertzelDetector (10ms, overlapping; multiple of 40 → 1400/1800 Hz land on exact bins) |
 | Frame structure | 1 START + 5 DATA + 1.5 STOP | BitSynchronizer, FSKSynthesizer |
+
+## Settings
+
+The gear button at the top right of `MainWindow` (opposite the "TTY Client" title) opens
+`SettingsWindow`, a modal dialog with one tunable parameter so far:
+
+- **Silent hops to reset FIGS shift** — how many consecutive ~5.5ms Goertzel hops of
+  sub-noise-floor energy must pass before the line is considered idle and `LineIdle` resets
+  `BitSynchronizer`/`BaudotDecoder` back to LTRS (see [Decoding pipeline](#decoding-pipeline)).
+  Default: `GoertzelDetector.DefaultIdleHopsThreshold` (~182 hops ≈ 1 second). The input only
+  accepts positive integers; the dialog shows the equivalent time ("~ X sec.") live and
+  validates on Save.
+
+Persisted via `AppSettings` to `%AppData%\TtyClient\settings.json`. A saved change only takes
+effect the next time "Start listening" is pressed (`CallConversationView`) or a WAV is
+imported (`AudioFilesView`) — it does not apply live to a capture that's already running,
+since `GoertzelDetector`'s threshold is fixed for the lifetime of each instance.
 
 ## Environment prerequisites
 

@@ -20,4 +20,9 @@ public partial class MainWindow : Window
         _readyToClose = true;
         Close();
     }
+
+    private void BtnSettings_Click(object sender, RoutedEventArgs e)
+    {
+        new SettingsWindow { Owner = this }.ShowDialog();
+    }
 }

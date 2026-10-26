@@ -67,18 +67,63 @@ public class GoertzelDetector
     /// </summary>
     private const int AnalysisWindow = 80;
 
+    /// <summary>
+    /// Minimum winning Goertzel magnitude to trust a MARK/SPACE decision at all. Below this,
+    /// there is no real carrier - just line noise (comfort noise, silence) - and comparing two
+    /// near-zero magnitudes against each other produces an essentially random MARK/SPACE
+    /// verdict. Letting that noise feed <see cref="BitSynchronizer"/> risks fabricating a
+    /// spurious character that happens to land on the FIGS or LTRS shift code, corrupting
+    /// <see cref="BaudotDecoder"/>'s shift state for everything decoded afterward.
+    ///
+    /// Calibrated against the real captured-call fixtures in TtyClient.Tests/Audios: true
+    /// silence measures as exactly 0, the signal's own silence<->tone transition ramps never
+    /// exceed ~20000, and the lowest quartile of genuine in-message tone sits at 75000+ (full
+    /// range up to ~600000). 20000 sits in the wide gap between those two clusters.
+    /// </summary>
+    private const double NoiseFloor = 20_000.0;
+
+    /// <summary>
+    /// Default hops of sustained sub-<see cref="NoiseFloor"/> energy before the line is
+    /// considered genuinely idle (<see cref="LineIdle"/>) rather than mid-transmission. ~1
+    /// second: long enough that it won't fire during an ordinary pause inside an active
+    /// transmission (which, on a real call, keeps the line carrying a signal rather than going
+    /// silent), short enough to recover well before the next real message starts. Configurable
+    /// per instance (see the constructor) so it can be tuned from the app's settings UI.
+    /// </summary>
+    public static readonly int DefaultIdleHopsThreshold = (int)Math.Round((double)SampleRate / HopSize);
+
+    /// <summary>Converts a hop count (as used by <see cref="DefaultIdleHopsThreshold"/> and the
+    /// constructor's <c>idleHopsThreshold</c>) to the time it represents, for display in the
+    /// settings UI.</summary>
+    public static double HopsToSeconds(int hops) => hops * HopSize / (double)SampleRate;
+
     private readonly double _coeffMark;
     private readonly double _coeffSpace;
+    private readonly int _idleHopsThreshold;
 
     private readonly short[] _window = new short[AnalysisWindow];
     private int _writePos;  // next slot to overwrite == oldest sample == start of the window
     private int _filled;
     private int _sinceHop;
+    private int _silentHops;
 
     public event Action<bool>? BitDetected; // true = MARK (1), false = SPACE (0)
 
-    public GoertzelDetector()
+    /// <summary>
+    /// Fires once when the line has carried no real tone (both frequencies below
+    /// <see cref="NoiseFloor"/>) for the configured idle-hops threshold consecutive hops - a
+    /// signal to reset downstream framing/shift state rather than wait for the far end to
+    /// resend LTRS.
+    /// </summary>
+    public event Action? LineIdle;
+
+    public GoertzelDetector() : this(DefaultIdleHopsThreshold)
     {
+    }
+
+    public GoertzelDetector(int idleHopsThreshold)
+    {
+        _idleHopsThreshold = idleHopsThreshold;
         _coeffMark = ComputeCoeff(FreqMark);
         _coeffSpace = ComputeCoeff(FreqSpace);
     }
@@ -102,8 +147,23 @@ public class GoertzelDetector
             _sinceHop = 0;
 
             // Skip the very first partial windows at the start of a stream.
-            if (_filled == AnalysisWindow)
-                BitDetected?.Invoke(Goertzel(_coeffMark) > Goertzel(_coeffSpace));
+            if (_filled != AnalysisWindow) continue;
+
+            double magMark = Goertzel(_coeffMark);
+            double magSpace = Goertzel(_coeffSpace);
+
+            if (Math.Max(magMark, magSpace) < NoiseFloor)
+            {
+                // No real carrier - don't fabricate a bit decision from noise. Track how long
+                // the line has been silent so a sustained gap can trigger LineIdle.
+                if (++_silentHops == _idleHopsThreshold)
+                    LineIdle?.Invoke();
+            }
+            else
+            {
+                _silentHops = 0;
+                BitDetected?.Invoke(magMark > magSpace);
+            }
         }
     }
 

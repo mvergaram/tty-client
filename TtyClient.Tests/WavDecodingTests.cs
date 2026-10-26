@@ -49,6 +49,44 @@ public class WavDecodingTests
             $"Edit distance: {distance} (max allowed: {MaxAllowedEditDistance})");
     }
 
+    // Regression test for the original bug report: "PLEASE CONTINUE TO HOLD....wav" ends in
+    // "..." (ITA-2 FIGS) with no trailing LTRS, exactly like a real remote TTY/relay that ends
+    // a turn without shifting back. Decoding it twice through the SAME persistent instances -
+    // as CallConversationView does across repeated plays in one listening session - used to
+    // leave BaudotDecoder stuck in FIGS for the whole second pass (e.g. "PLEASE CONTINUE TO H"
+    // came out as "0)3-'3 :9,58,73 59 #").
+    [Fact]
+    public void RepeatedPlayback_OfMessageEndingInFigs_DecodesSecondPassCorrectly()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Audios", "PLEASE CONTINUE TO HOLD....wav");
+
+        var goertzel = new GoertzelDetector();
+        var sync = new BitSynchronizer();
+        var decoder = new BaudotDecoder();
+        var sb = new StringBuilder();
+        goertzel.BitDetected += sync.OnBit;
+        goertzel.LineIdle += () => { sync.Reset(); decoder.Reset(); };
+        sync.CharacterReceived += decoder.OnByte;
+        decoder.CharacterDecoded += ch => sb.Append(ch);
+
+        WavFileHandler.LoadSamples(path, (samples, count) => goertzel.ProcessSamples(samples, count));
+        sb.Clear(); // only the second pass's decode matters here
+
+        var silence = new short[16000]; // comfortably over the ~1s idle threshold
+        goertzel.ProcessSamples(silence, silence.Length);
+
+        WavFileHandler.LoadSamples(path, (samples, count) => goertzel.ProcessSamples(samples, count));
+
+        var secondPass = sb.ToString();
+        var distance = LevenshteinDistance("PLEASE CONTINUE TO HOLD...", secondPass);
+
+        Assert.True(
+            distance <= MaxAllowedEditDistance,
+            $"Second playback pass decoded incorrectly (likely stuck in FIGS shift).\n" +
+            $"Actual: \"{secondPass}\"\n" +
+            $"Edit distance: {distance} (max allowed: {MaxAllowedEditDistance})");
+    }
+
     private static int LevenshteinDistance(string a, string b)
     {
         var distances = new int[a.Length + 1, b.Length + 1];

@@ -47,8 +47,14 @@ public class GoertzelDetectorTests
         Assert.All(detections, Assert.False);
     }
 
+    // Contract change: silence used to resolve to a deterministic SPACE decision on every hop
+    // (both Goertzel magnitudes are ~0, and 0 > 0 is false). That fabricated a byte stream out
+    // of pure noise, which BitSynchronizer would happily frame into characters - including,
+    // given enough real-world line noise, an occasional spurious FIGS/LTRS that corrupts
+    // BaudotDecoder's shift state. Below NoiseFloor there's no real carrier, so no bit decision
+    // is trustworthy; ProcessSamples now emits nothing instead of guessing.
     [Fact]
-    public void ProcessSamples_Silence_ResolvesToSpace()
+    public void ProcessSamples_BriefSilence_EmitsNoBitDetections()
     {
         var detector = new GoertzelDetector();
         var detections = new List<bool>();
@@ -57,8 +63,75 @@ public class GoertzelDetectorTests
         var silence = new short[200];
         detector.ProcessSamples(silence, silence.Length);
 
-        Assert.NotEmpty(detections);
-        Assert.All(detections, Assert.False);
+        Assert.Empty(detections);
+    }
+
+    [Fact]
+    public void ProcessSamples_SustainedSilenceAfterTone_RaisesLineIdle()
+    {
+        var detector = new GoertzelDetector();
+        int idleCount = 0;
+        detector.LineIdle += () => idleCount++;
+
+        var tone = GenerateTone(1400.0, 2000);
+        detector.ProcessSamples(tone, tone.Length);
+
+        // Well over a second of silence: comfortably past the ~1s idle threshold.
+        var silence = new short[16000];
+        detector.ProcessSamples(silence, silence.Length);
+
+        Assert.Equal(1, idleCount);
+    }
+
+    [Fact]
+    public void ProcessSamples_BriefGapShorterThanThreshold_DoesNotRaiseLineIdle()
+    {
+        var detector = new GoertzelDetector();
+        int idleCount = 0;
+        detector.LineIdle += () => idleCount++;
+
+        var tone = GenerateTone(1400.0, 2000);
+        detector.ProcessSamples(tone, tone.Length);
+
+        var briefGap = new short[2000]; // well under the ~1s idle threshold
+        detector.ProcessSamples(briefGap, briefGap.Length);
+
+        Assert.Equal(0, idleCount);
+    }
+
+    [Fact]
+    public void ProcessSamples_ContinuousTone_NeverRaisesLineIdle()
+    {
+        var detector = new GoertzelDetector();
+        int idleCount = 0;
+        detector.LineIdle += () => idleCount++;
+
+        var tone = GenerateTone(1400.0, 20000); // well over a second of continuous tone
+        detector.ProcessSamples(tone, tone.Length);
+
+        Assert.Equal(0, idleCount);
+    }
+
+    [Fact]
+    public void ProcessSamples_CustomIdleHopsThreshold_RaisesLineIdleAtConfiguredCount()
+    {
+        const int customThreshold = 20; // far below the ~182-hop (~1s) default
+        var detector = new GoertzelDetector(customThreshold);
+        int idleCount = 0;
+        detector.LineIdle += () => idleCount++;
+
+        var tone = GenerateTone(1400.0, 2000);
+        detector.ProcessSamples(tone, tone.Length);
+
+        // Plenty of silence (hop = 44 samples, so ~113 hops available - comfortably more than
+        // customThreshold once the handful of tone/silence straddling hops right after the
+        // tone are discounted). A default-threshold detector would need ~182 hops (16000+
+        // samples) to go idle, so firing this early proves the configured threshold - not the
+        // default - is what actually triggered LineIdle.
+        var silence = new short[5000];
+        detector.ProcessSamples(silence, silence.Length);
+
+        Assert.Equal(1, idleCount);
     }
 
     [Fact]

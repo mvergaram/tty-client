@@ -23,7 +23,7 @@ public partial class CallConversationView : UserControl
     }
 
     private readonly AudioCapture _capture = new();
-    private readonly GoertzelDetector _goertzel = new();
+    private GoertzelDetector _goertzel = new();
     private readonly BitSynchronizer _sync = new();
     private readonly BaudotDecoder _decoder = new();
     private readonly FSKSynthesizer _synth = new();
@@ -35,9 +35,11 @@ public partial class CallConversationView : UserControl
     {
         InitializeComponent();
 
-        // Wire the TTY decode pipeline: audio → goertzel → bits → baudot → text
+        // Wire the TTY decode pipeline: audio → goertzel → bits → baudot → text. _goertzel
+        // itself is (re)created in StartCapture() so it always picks up the current
+        // App.Settings.IdleHopsThreshold; capturing it as a field (not a local) here means this
+        // closure keeps reading whichever instance is current.
         _capture.SamplesAvailable += (samples, count) => _goertzel.ProcessSamples(samples, count);
-        _goertzel.BitDetected += isMark => _sync.OnBit(isMark);
         _sync.CharacterReceived += code => _decoder.OnByte(code);
         _decoder.CharacterDecoded += ch => Dispatcher.Invoke(() => AppendReceived(ch));
 
@@ -104,6 +106,11 @@ public partial class CallConversationView : UserControl
         {
             _sync.Reset();
             _decoder.Reset();
+
+            _goertzel = new GoertzelDetector(App.Settings.IdleHopsThreshold);
+            _goertzel.BitDetected += isMark => _sync.OnBit(isMark);
+            _goertzel.LineIdle += () => { _sync.Reset(); _decoder.Reset(); };
+
             var endpoint = InputDeviceCombo.SelectedItem as AudioEndpointInfo;
             _capture.Start(endpoint);
 

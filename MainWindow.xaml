@@ -11,10 +11,16 @@
         Closing="Window_Closing">
 
     <DockPanel Margin="16">
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,12">
-            <TextBlock Text="TTY Client" FontSize="20" FontWeight="Bold"
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+            <TextBlock DockPanel.Dock="Left" Text="TTY Client" FontSize="20" FontWeight="Bold"
                        Foreground="#CDD6F4" VerticalAlignment="Center"/>
-        </StackPanel>
+            <Button DockPanel.Dock="Right" x:Name="BtnSettings"
+                    Style="{StaticResource IconButton}"
+                    FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                    Content="&#xE713;"
+                    ToolTip="Settings"
+                    Click="BtnSettings_Click"/>
+        </DockPanel>
 
         <TabControl Background="Transparent" BorderThickness="0" Padding="0"
                     ItemContainerStyle="{StaticResource SegmentedTab}">
