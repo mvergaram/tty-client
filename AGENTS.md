@@ -2,6 +2,10 @@
 
 TTY/TDD software client for Windows 11 that captures softphone call audio and decodes/encodes Baudot FSK tones in real time.
 
+## CLAUDE.md and AGENTS.md
+
+Avoid using/creating CLAUDE.md file. Instead, document on AGENTS.md except those Claude code specific items.
+
 ## Stack
 
 - **Language**: C# 13 / .NET 10 (net10.0-windows)
@@ -138,7 +142,3 @@ before finishing the task whether the following should also be updated:
 
 Do not update these materials automatically without confirming first — they are external deliverables
 (demos, presenter guides) that don't always need to stay in sync with every minor visual change.
-
-## TODO
-
-- [x] ~~Investigate why the app hangs (becomes unresponsive) if it's listening and the window is closed (X).~~ Fixed: `MainWindow.Window_Closing` cancels the close, awaits `CallConversationView.ShutdownAsync()` (which does `_capture.Dispose()`/`_injector.Dispose()` inside a `Task.Run`, off the UI thread), and only then closes the window.
