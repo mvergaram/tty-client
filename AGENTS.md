@@ -53,11 +53,10 @@ tty-client/
 │   ├── CallConversationView.xaml(.cs)  # Live call interface: input/output devices, start/stop listening, send text via virtual microphone
 │   └── AudioFilesView.xaml(.cs)        # Files interface: text → WAV ("Save WAV") and WAV → text ("Import WAV")
 ├── AI/
-│   ├── AiConfig.cs                # Loads ai.conf (ApiKey/Model/SystemPrompt), per-field defaults
-│   ├── PortkeyModelReference.cs   # Parses "@provider/model" into the Portkey provider slug + model name
+│   ├── AiDefaults.cs              # Default Url/ApiKey/Provider/Model/SystemPrompt for the AI settings
 │   ├── PortkeyChatClient.cs       # OpenAI ChatClient wrapped with Portkey's gateway headers (see AI improved text)
 │   └── CallTranscriptLogger.cs    # JSON Lines writer for each call's transcription/<timestamp>Z.txt
-├── AppSettings.cs              # Persisted user settings (JSON in %AppData%\TtyClient\settings.json) — IdleHopsThreshold, AiImprovedTextEnabled
+├── AppSettings.cs              # Persisted user settings (JSON in %AppData%\TtyClient\settings.json) — IdleHopsThreshold + all AI settings
 ├── SettingsWindow.xaml(.cs)    # Modal settings dialog opened from MainWindow's gear button
 ├── MainWindow.xaml             # Shell: header (title + settings gear button) + TabControl hosting the two views (dark Catppuccin theme in App.xaml)
 ├── MainWindow.xaml.cs          # Opens SettingsWindow; closes the window safely, awaiting CallConversationView.ShutdownAsync()
@@ -98,7 +97,7 @@ user text
 ## AI improved text
 
 `CallConversationView` can send each received (decoded) message through an LLM, via Portkey, to
-clean up typos caused by audio noise or FIGS/LTRS shift mix-ups. Enabled by default
+clean up typos caused by audio noise or FIGS/LTRS shift mix-ups. **Disabled by default**
 (`AppSettings.AiImprovedTextEnabled`, see [Settings](#settings)); when on, a small badge (the
 `Assets/ai-favicon.png` icon + "AI improved text") appears next to the "RECEIVED" header.
 
@@ -107,18 +106,18 @@ clean up typos caused by audio noise or FIGS/LTRS shift mix-ups. Enabled by defa
   unrelated purpose of resetting FIGS shift on its own, separately configurable threshold. When the
   timer fires, the buffered text since the last boundary is treated as one completed message.
 - **Portkey call**: `AI/PortkeyChatClient.cs` follows Portkey's official C# SDK pattern — the
-  `OpenAI` NuGet package's `ChatClient` pointed at `https://api.portkey.ai/v1` with a
+  `OpenAI` NuGet package's `ChatClient` pointed at a configurable endpoint URL with a
   `PipelinePolicy` injecting the `x-portkey-api-key`/`x-portkey-provider` headers instead of a real
   OpenAI key. On success, `AI: <improved text>` is appended after the original message (mauve,
   `#CBA6F7`); on failure or a 15-second timeout, `AI: (unavailable)` is appended instead (red/pink,
   `#F38BA8`) — failures are shown, never silent.
-- **`ai.conf`**: a JSON file next to the `.exe` (`AppContext.BaseDirectory`, not `Assembly.Location`
-  — the latter is empty for a single-file publish) holding `ApiKey`, `Model` (a combined
-  `"@provider/model"` reference, e.g. `"@dsvertex/anthropic.claude-haiku-5-5"`, split by
-  `PortkeyModelReference.Parse`), and `SystemPrompt`. Missing file or missing/blank individual
-  fields fall back to their own default independently (`AiConfig.DefaultApiKey`/`DefaultModel`/
-  `DefaultSystemPrompt`). Loaded once when `CallConversationView` is constructed — editing
-  `ai.conf` requires restarting the app to take effect.
+- **Configuration**: URL, API key, provider, and model are separate fields in `SettingsWindow`
+  (see [Settings](#settings)), persisted alongside everything else in
+  `%AppData%\TtyClient\settings.json` — there is no separate config file. A blank field falls back
+  to its own default independently (`AI/AiDefaults.cs`). The system prompt is not user-editable; it
+  is a fixed default in `AiDefaults.SystemPrompt`. Unlike the FIGS-reset hops threshold, editing any
+  AI field and saving takes effect on the very next message, with no restart needed —
+  `CallConversationView` rebuilds its `PortkeyChatClient` on `AppSettings.Changed`.
 - **Call transcript log**: every received message, sent message, and AI result/error for a call is
   appended as one JSON object per line (`AI/CallTranscriptLogger.cs`) to
   `transcription/<call-start-UTC>Z.txt` next to the `.exe`, e.g. `2026-03-05_14-23-05Z.txt`. A
@@ -140,7 +139,7 @@ clean up typos caused by audio noise or FIGS/LTRS shift mix-ups. Enabled by defa
 ## Settings
 
 The gear button at the top right of `MainWindow` (opposite the "TTY Client" title) opens
-`SettingsWindow`, a modal dialog with two tunable parameters so far:
+`SettingsWindow`, a modal dialog with:
 
 - **Silent hops to reset FIGS shift** — how many consecutive ~5.5ms Goertzel hops of
   sub-noise-floor energy must pass before the line is considered idle and `LineIdle` resets
@@ -149,14 +148,16 @@ The gear button at the top right of `MainWindow` (opposite the "TTY Client" titl
   accepts positive integers; the dialog shows the equivalent time ("~ X sec.") live and
   validates on Save.
 - **Improve received text with AI** — toggles `AiImprovedTextEnabled` (see
-  [AI improved text](#ai-improved-text)). Default: enabled.
+  [AI improved text](#ai-improved-text)). Default: **disabled**. Checking it enables four more
+  fields — **AI endpoint URL**, **API key**, **Provider**, **Model** — which are grayed out while
+  unchecked; all four fall back to `AI/AiDefaults.cs` defaults when left blank.
 
 Persisted via `AppSettings` to `%AppData%\TtyClient\settings.json`. The FIGS-reset threshold only
 takes effect the next time "Start listening" is pressed (`CallConversationView`) or a WAV is
 imported (`AudioFilesView`) — it does not apply live to a capture that's already running, since
-`GoertzelDetector`'s threshold is fixed for the lifetime of each instance. The AI toggle, by
-contrast, applies immediately (badge visibility and whether new messages are sent to Portkey both
-read `App.Settings.AiImprovedTextEnabled` live), even during an ongoing call.
+`GoertzelDetector`'s threshold is fixed for the lifetime of each instance. The AI settings, by
+contrast, apply immediately (badge visibility and the `PortkeyChatClient` used for the next message
+both read the latest `AppSettings` values via the `Changed` event), even during an ongoing call.
 
 ## Environment prerequisites
 

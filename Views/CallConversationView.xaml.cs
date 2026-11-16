@@ -36,7 +36,7 @@ public partial class CallConversationView : UserControl
     private readonly FSKSynthesizer _synth = new();
     private readonly VirtualMicInjector _injector = new();
 
-    private readonly PortkeyChatClient _aiClient = new(AiConfig.Load());
+    private PortkeyChatClient _aiClient = BuildAiClient();
     private readonly DispatcherTimer _aiDebounceTimer;
     private readonly StringBuilder _pendingReceivedMessage = new();
     private CancellationTokenSource? _callSessionCts;
@@ -61,10 +61,14 @@ public partial class CallConversationView : UserControl
 
         UpdateAiBadgeVisibility();
         App.Settings.Changed += UpdateAiBadgeVisibility;
+        App.Settings.Changed += () => _aiClient = BuildAiClient();
 
         RefreshDevices();
         RefreshInputDevices();
     }
+
+    private static PortkeyChatClient BuildAiClient() => new(
+        App.Settings.AiUrl, App.Settings.AiApiKey, App.Settings.AiProvider, App.Settings.AiModel, AiDefaults.SystemPrompt);
 
     private void UpdateAiBadgeVisibility() =>
         AiBadge.Visibility = App.Settings.AiImprovedTextEnabled ? Visibility.Visible : Visibility.Collapsed;

@@ -17,26 +17,22 @@ namespace TtyClient.AI;
 /// </summary>
 public sealed class PortkeyChatClient
 {
-    private static readonly Uri PortkeyEndpoint = new("https://api.portkey.ai/v1");
-
     private readonly ChatClient _chatClient;
     private readonly string _systemPrompt;
 
-    public PortkeyChatClient(AiConfig config)
+    public PortkeyChatClient(string endpointUrl, string apiKey, string provider, string model, string systemPrompt)
     {
-        var (providerSlug, modelName) = PortkeyModelReference.Parse(config.Model);
-
         var headers = new Dictionary<string, string>
         {
-            ["x-portkey-api-key"] = config.ApiKey,
-            ["x-portkey-provider"] = providerSlug,
+            ["x-portkey-api-key"] = apiKey,
+            ["x-portkey-provider"] = "@" + provider.TrimStart('@'),
         };
 
-        var options = new OpenAIClientOptions { Endpoint = PortkeyEndpoint };
+        var options = new OpenAIClientOptions { Endpoint = new Uri(endpointUrl) };
         options.AddPolicy(new HeaderPolicy(headers), PipelinePosition.PerCall);
 
-        _chatClient = new OpenAIClient(new ApiKeyCredential("dummy"), options).GetChatClient(modelName);
-        _systemPrompt = config.SystemPrompt;
+        _chatClient = new OpenAIClient(new ApiKeyCredential("dummy"), options).GetChatClient(model);
+        _systemPrompt = systemPrompt;
     }
 
     public async Task<string> ImproveTextAsync(string originalText, CancellationToken cancellationToken)
