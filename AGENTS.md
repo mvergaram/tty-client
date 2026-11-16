@@ -12,6 +12,7 @@ Avoid using/creating CLAUDE.md file. Instead, document on AGENTS.md except those
 - **UI**: WPF
 - **Audio**: NAudio 2.2.1 (WASAPI loopback + WasapiOut)
 - **TTY protocol**: US Weitbrecht standard — 45.45 baud, 1400/1800 Hz FSK, Baudot ITA-2
+- **AI text improvement**: OpenAI NuGet package (`OpenAI.Chat.ChatClient`) routed through [Portkey](https://portkey.ai/docs/introduction/what-is-portkey.md) as the AI gateway
 
 ## Commands
 
@@ -51,7 +52,12 @@ tty-client/
 ├── Views/
 │   ├── CallConversationView.xaml(.cs)  # Live call interface: input/output devices, start/stop listening, send text via virtual microphone
 │   └── AudioFilesView.xaml(.cs)        # Files interface: text → WAV ("Save WAV") and WAV → text ("Import WAV")
-├── AppSettings.cs              # Persisted user settings (JSON in %AppData%\TtyClient\settings.json) — currently just IdleHopsThreshold
+├── AI/
+│   ├── AiConfig.cs                # Loads ai.conf (ApiKey/Model/SystemPrompt), per-field defaults
+│   ├── PortkeyModelReference.cs   # Parses "@provider/model" into the Portkey provider slug + model name
+│   ├── PortkeyChatClient.cs       # OpenAI ChatClient wrapped with Portkey's gateway headers (see AI improved text)
+│   └── CallTranscriptLogger.cs    # JSON Lines writer for each call's transcription/<timestamp>Z.txt
+├── AppSettings.cs              # Persisted user settings (JSON in %AppData%\TtyClient\settings.json) — IdleHopsThreshold, AiImprovedTextEnabled
 ├── SettingsWindow.xaml(.cs)    # Modal settings dialog opened from MainWindow's gear button
 ├── MainWindow.xaml             # Shell: header (title + settings gear button) + TabControl hosting the two views (dark Catppuccin theme in App.xaml)
 ├── MainWindow.xaml.cs          # Opens SettingsWindow; closes the window safely, awaiting CallConversationView.ShutdownAsync()
@@ -89,6 +95,36 @@ user text
   → The softphone transmits the tones as if they were the microphone's voice
 ```
 
+## AI improved text
+
+`CallConversationView` can send each received (decoded) message through an LLM, via Portkey, to
+clean up typos caused by audio noise or FIGS/LTRS shift mix-ups. Enabled by default
+(`AppSettings.AiImprovedTextEnabled`, see [Settings](#settings)); when on, a small badge (the
+`Assets/ai-favicon.png` icon + "AI improved text") appears next to the "RECEIVED" header.
+
+- **Message boundary**: a dedicated 1-second `DispatcherTimer` in `CallConversationView`, reset on
+  every newly received character — independent of `GoertzelDetector.LineIdle`, which serves the
+  unrelated purpose of resetting FIGS shift on its own, separately configurable threshold. When the
+  timer fires, the buffered text since the last boundary is treated as one completed message.
+- **Portkey call**: `AI/PortkeyChatClient.cs` follows Portkey's official C# SDK pattern — the
+  `OpenAI` NuGet package's `ChatClient` pointed at `https://api.portkey.ai/v1` with a
+  `PipelinePolicy` injecting the `x-portkey-api-key`/`x-portkey-provider` headers instead of a real
+  OpenAI key. On success, `AI: <improved text>` is appended after the original message (mauve,
+  `#CBA6F7`); on failure or a 15-second timeout, `AI: (unavailable)` is appended instead (red/pink,
+  `#F38BA8`) — failures are shown, never silent.
+- **`ai.conf`**: a JSON file next to the `.exe` (`AppContext.BaseDirectory`, not `Assembly.Location`
+  — the latter is empty for a single-file publish) holding `ApiKey`, `Model` (a combined
+  `"@provider/model"` reference, e.g. `"@dsvertex/anthropic.claude-haiku-5-5"`, split by
+  `PortkeyModelReference.Parse`), and `SystemPrompt`. Missing file or missing/blank individual
+  fields fall back to their own default independently (`AiConfig.DefaultApiKey`/`DefaultModel`/
+  `DefaultSystemPrompt`). Loaded once when `CallConversationView` is constructed — editing
+  `ai.conf` requires restarting the app to take effect.
+- **Call transcript log**: every received message, sent message, and AI result/error for a call is
+  appended as one JSON object per line (`AI/CallTranscriptLogger.cs`) to
+  `transcription/<call-start-UTC>Z.txt` next to the `.exe`, e.g. `2026-03-05_14-23-05Z.txt`. A
+  logging failure (e.g. an unwritable folder) doesn't block "Start listening" — it's swallowed and
+  the call proceeds without a transcript file.
+
 ## Fixed TTY parameters
 
 | Constant | Value | Where |
@@ -104,7 +140,7 @@ user text
 ## Settings
 
 The gear button at the top right of `MainWindow` (opposite the "TTY Client" title) opens
-`SettingsWindow`, a modal dialog with one tunable parameter so far:
+`SettingsWindow`, a modal dialog with two tunable parameters so far:
 
 - **Silent hops to reset FIGS shift** — how many consecutive ~5.5ms Goertzel hops of
   sub-noise-floor energy must pass before the line is considered idle and `LineIdle` resets
@@ -112,11 +148,15 @@ The gear button at the top right of `MainWindow` (opposite the "TTY Client" titl
   Default: `GoertzelDetector.DefaultIdleHopsThreshold` (~182 hops ≈ 1 second). The input only
   accepts positive integers; the dialog shows the equivalent time ("~ X sec.") live and
   validates on Save.
+- **Improve received text with AI** — toggles `AiImprovedTextEnabled` (see
+  [AI improved text](#ai-improved-text)). Default: enabled.
 
-Persisted via `AppSettings` to `%AppData%\TtyClient\settings.json`. A saved change only takes
-effect the next time "Start listening" is pressed (`CallConversationView`) or a WAV is
-imported (`AudioFilesView`) — it does not apply live to a capture that's already running,
-since `GoertzelDetector`'s threshold is fixed for the lifetime of each instance.
+Persisted via `AppSettings` to `%AppData%\TtyClient\settings.json`. The FIGS-reset threshold only
+takes effect the next time "Start listening" is pressed (`CallConversationView`) or a WAV is
+imported (`AudioFilesView`) — it does not apply live to a capture that's already running, since
+`GoertzelDetector`'s threshold is fixed for the lifetime of each instance. The AI toggle, by
+contrast, applies immediately (badge visibility and whether new messages are sent to Portkey both
+read `App.Settings.AiImprovedTextEnabled` live), even during an ongoing call.
 
 ## Environment prerequisites
 

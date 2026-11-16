@@ -15,10 +15,12 @@
 
   <ItemGroup>
     <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="OpenAI" Version="2.15.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Assets\icon.ico" />
+    <Resource Include="Assets\ai-favicon.png" />
   </ItemGroup>
 
   <ItemGroup>

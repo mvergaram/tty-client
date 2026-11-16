@@ -13,6 +13,7 @@ namespace TtyClient;
 public sealed class AppSettings
 {
     public int IdleHopsThreshold { get; private set; } = GoertzelDetector.DefaultIdleHopsThreshold;
+    public bool AiImprovedTextEnabled { get; private set; } = true;
 
     public event Action? Changed;
 
@@ -38,8 +39,13 @@ public sealed class AppSettings
         {
             var json = File.ReadAllText(_filePath);
             var data = JsonSerializer.Deserialize<SettingsData>(json);
-            if (data is not null && data.IdleHopsThreshold > 0)
-                IdleHopsThreshold = data.IdleHopsThreshold;
+            if (data is not null)
+            {
+                if (data.IdleHopsThreshold > 0)
+                    IdleHopsThreshold = data.IdleHopsThreshold;
+                if (data.AiImprovedTextEnabled.HasValue)
+                    AiImprovedTextEnabled = data.AiImprovedTextEnabled.Value;
+            }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {
@@ -48,20 +54,21 @@ public sealed class AppSettings
         }
     }
 
-    public void Save(int idleHopsThreshold)
+    public void Save(int idleHopsThreshold, bool aiImprovedTextEnabled)
     {
         if (idleHopsThreshold <= 0)
             throw new ArgumentOutOfRangeException(nameof(idleHopsThreshold), "Must be a positive integer.");
 
         IdleHopsThreshold = idleHopsThreshold;
+        AiImprovedTextEnabled = aiImprovedTextEnabled;
 
         var directory = Path.GetDirectoryName(_filePath);
         if (!string.IsNullOrEmpty(directory))
             Directory.CreateDirectory(directory);
 
-        File.WriteAllText(_filePath, JsonSerializer.Serialize(new SettingsData(idleHopsThreshold)));
+        File.WriteAllText(_filePath, JsonSerializer.Serialize(new SettingsData(idleHopsThreshold, aiImprovedTextEnabled)));
         Changed?.Invoke();
     }
 
-    private record SettingsData(int IdleHopsThreshold);
+    private record SettingsData(int IdleHopsThreshold, bool? AiImprovedTextEnabled);
 }

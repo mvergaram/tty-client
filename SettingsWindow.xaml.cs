@@ -20,6 +20,8 @@ public partial class SettingsWindow : Window
         HopsInput.Focus();
         UpdateSecondsLabel();
 
+        AiImprovedTextCheckBox.IsChecked = App.Settings.AiImprovedTextEnabled;
+
         DataObject.AddPastingHandler(HopsInput, HopsInput_Pasting);
     }
 
@@ -61,7 +63,7 @@ public partial class SettingsWindow : Window
             return;
         }
 
-        App.Settings.Save(hops);
+        App.Settings.Save(hops, AiImprovedTextCheckBox.IsChecked ?? true);
         Close();
     }
 

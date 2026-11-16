@@ -15,7 +15,7 @@ public class AppSettingsTests
         try
         {
             var first = new AppSettings(path);
-            first.Save(321);
+            first.Save(321, true);
 
             var second = new AppSettings(path);
 
@@ -37,7 +37,7 @@ public class AppSettingsTests
         {
             var settings = new AppSettings(path);
 
-            Assert.Throws<ArgumentOutOfRangeException>(() => settings.Save(invalidValue));
+            Assert.Throws<ArgumentOutOfRangeException>(() => settings.Save(invalidValue, true));
         }
         finally
         {
@@ -55,9 +55,57 @@ public class AppSettingsTests
             int changedCount = 0;
             settings.Changed += () => changedCount++;
 
-            settings.Save(50);
+            settings.Save(50, true);
 
             Assert.Equal(1, changedCount);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void Save_PersistsAndReloadsAiImprovedTextEnabled()
+    {
+        var path = TempSettingsPath();
+        try
+        {
+            var first = new AppSettings(path);
+            first.Save(321, false);
+
+            var second = new AppSettings(path);
+
+            Assert.False(second.AiImprovedTextEnabled);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void Constructor_MissingFile_DefaultsAiImprovedTextEnabledToTrue()
+    {
+        var path = TempSettingsPath(); // never written
+
+        var settings = new AppSettings(path);
+
+        Assert.True(settings.AiImprovedTextEnabled);
+    }
+
+    [Fact]
+    public void Constructor_FileFromOlderVersionMissingAiField_DefaultsToTrue()
+    {
+        var path = TempSettingsPath();
+        try
+        {
+            File.WriteAllText(path, """{"IdleHopsThreshold":321}""");
+
+            var settings = new AppSettings(path);
+
+            Assert.Equal(321, settings.IdleHopsThreshold);
+            Assert.True(settings.AiImprovedTextEnabled);
         }
         finally
         {

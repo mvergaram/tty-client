@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Settings"
         Icon="Assets/icon.ico"
-        Height="220" Width="440"
+        Height="260" Width="440"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         Background="#1E1E2E"
@@ -11,6 +11,7 @@
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -39,7 +40,12 @@
                        VerticalAlignment="Center" Margin="10,0,0,0"/>
         </Grid>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+        <CheckBox Grid.Row="2" x:Name="AiImprovedTextCheckBox"
+                  Content="Improve received text with AI"
+                  Foreground="#CDD6F4" FontSize="13"
+                  Margin="0,16,0,0" VerticalContentAlignment="Center"/>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Cancel" Style="{StaticResource ActionButton}"
                     Margin="0,0,8,0" Click="BtnCancel_Click"/>
             <Button Content="Save" Style="{StaticResource SendButton}"
