@@ -1,4 +1,5 @@
 using System;
+using System.ClientModel;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -100,6 +101,8 @@ public partial class CallConversationView : UserControl
     {
         AppendChar('\n', brush);
         foreach (char c in text) AppendChar(c, brush);
+        AppendChar('\n', brush);
+        AppendChar('\n', brush);
     }
 
     private void AppendReceived(char ch, bool isSent = false)
@@ -142,6 +145,10 @@ public partial class CallConversationView : UserControl
         {
             return; // call stopped or app closing mid-request; nothing to show, nothing to log
         }
+        catch (ClientResultException ex)
+        {
+            error = $"status {ex.Status}: {ex.Message}";
+        }
         catch (Exception ex)
         {
             error = ex.Message;
@@ -154,8 +161,9 @@ public partial class CallConversationView : UserControl
         }
         else
         {
-            Dispatcher.Invoke(() => AppendLine("AI: (unavailable)", AiErrorBrush));
-            logger?.LogError(originalText, error ?? "unknown error");
+            error ??= "unknown error";
+            Dispatcher.Invoke(() => AppendLine($"AI: (error) {error}", AiErrorBrush));
+            logger?.LogError(originalText, error);
         }
     }
 
@@ -273,6 +281,7 @@ public partial class CallConversationView : UserControl
         AppendReceived('\n', isSent: true);
         foreach (char c in $"YOU: {text}")
             AppendReceived(c, isSent: true);
+        AppendReceived('\n', isSent: true);
         AppendReceived('\n', isSent: true);
         _transcriptLogger?.LogSent(text);
 

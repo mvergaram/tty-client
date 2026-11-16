@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Settings"
         Icon="Assets/icon.ico"
-        Height="460" Width="480"
+        Height="520" Width="480"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         Background="#1E1E2E"
@@ -63,29 +63,19 @@
                      Padding="8,6" FontFamily="Consolas" FontSize="13"
                      CaretBrush="#CDD6F4" Margin="0,0,0,10"/>
 
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="12"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="Provider" Foreground="#CDD6F4" FontSize="12" Margin="0,0,0,4"/>
-                    <TextBox x:Name="AiProviderInput"
-                             Background="#313244" Foreground="#CDD6F4"
-                             BorderThickness="1" BorderBrush="#45475A"
-                             Padding="8,6" FontFamily="Consolas" FontSize="13"
-                             CaretBrush="#CDD6F4"/>
-                </StackPanel>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Text="Model" Foreground="#CDD6F4" FontSize="12" Margin="0,0,0,4"/>
-                    <TextBox x:Name="AiModelInput"
-                             Background="#313244" Foreground="#CDD6F4"
-                             BorderThickness="1" BorderBrush="#45475A"
-                             Padding="8,6" FontFamily="Consolas" FontSize="13"
-                             CaretBrush="#CDD6F4"/>
-                </StackPanel>
-            </Grid>
+            <TextBlock Text="Provider" Foreground="#CDD6F4" FontSize="12" Margin="0,0,0,4"/>
+            <TextBox x:Name="AiProviderInput"
+                     Background="#313244" Foreground="#CDD6F4"
+                     BorderThickness="1" BorderBrush="#45475A"
+                     Padding="8,6" FontFamily="Consolas" FontSize="13"
+                     CaretBrush="#CDD6F4" Margin="0,0,0,10"/>
+
+            <TextBlock Text="Model" Foreground="#CDD6F4" FontSize="12" Margin="0,0,0,4"/>
+            <TextBox x:Name="AiModelInput"
+                     Background="#313244" Foreground="#CDD6F4"
+                     BorderThickness="1" BorderBrush="#45475A"
+                     Padding="8,6" FontFamily="Consolas" FontSize="13"
+                     CaretBrush="#CDD6F4"/>
         </StackPanel>
 
         <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">

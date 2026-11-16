@@ -109,8 +109,10 @@ clean up typos caused by audio noise or FIGS/LTRS shift mix-ups. **Disabled by d
   `OpenAI` NuGet package's `ChatClient` pointed at a configurable endpoint URL with a
   `PipelinePolicy` injecting the `x-portkey-api-key`/`x-portkey-provider` headers instead of a real
   OpenAI key. On success, `AI: <improved text>` is appended after the original message (mauve,
-  `#CBA6F7`); on failure or a 15-second timeout, `AI: (unavailable)` is appended instead (red/pink,
-  `#F38BA8`) — failures are shown, never silent.
+  `#CBA6F7`), followed by two blank lines. On failure or a 15-second timeout, `AI: (error) <status:
+  message>` is appended instead (red/pink, `#F38BA8`) — a `System.ClientModel.ClientResultException`
+  (an HTTP-level failure from Portkey/OpenAI) shows its status code and message; any other exception
+  shows just its message. Failures are always shown on screen, never silent.
 - **Configuration**: URL, API key, provider, and model are separate fields in `SettingsWindow`
   (see [Settings](#settings)), persisted alongside everything else in
   `%AppData%\TtyClient\settings.json` — there is no separate config file. A blank field falls back
