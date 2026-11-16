@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using TtyClient.AI;
 using TtyClient.TTY;
 
 namespace TtyClient;
@@ -13,6 +14,11 @@ namespace TtyClient;
 public sealed class AppSettings
 {
     public int IdleHopsThreshold { get; private set; } = GoertzelDetector.DefaultIdleHopsThreshold;
+    public bool AiImprovedTextEnabled { get; private set; } = false;
+    public string AiUrl { get; private set; } = AiDefaults.Url;
+    public string AiApiKey { get; private set; } = AiDefaults.ApiKey;
+    public string AiProvider { get; private set; } = AiDefaults.Provider;
+    public string AiModel { get; private set; } = AiDefaults.Model;
 
     public event Action? Changed;
 
@@ -38,30 +44,55 @@ public sealed class AppSettings
         {
             var json = File.ReadAllText(_filePath);
             var data = JsonSerializer.Deserialize<SettingsData>(json);
-            if (data is not null && data.IdleHopsThreshold > 0)
-                IdleHopsThreshold = data.IdleHopsThreshold;
+            if (data is not null)
+            {
+                if (data.IdleHopsThreshold > 0)
+                    IdleHopsThreshold = data.IdleHopsThreshold;
+                if (data.AiImprovedTextEnabled.HasValue)
+                    AiImprovedTextEnabled = data.AiImprovedTextEnabled.Value;
+                if (!string.IsNullOrWhiteSpace(data.AiUrl))
+                    AiUrl = data.AiUrl;
+                if (!string.IsNullOrWhiteSpace(data.AiApiKey))
+                    AiApiKey = data.AiApiKey;
+                if (!string.IsNullOrWhiteSpace(data.AiProvider))
+                    AiProvider = data.AiProvider;
+                if (!string.IsNullOrWhiteSpace(data.AiModel))
+                    AiModel = data.AiModel;
+            }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {
             // Missing or corrupt settings file: first run, or nothing worth recovering.
-            // Keep the default already assigned by the property initializer.
+            // Keep the defaults already assigned by the property initializers.
         }
     }
 
-    public void Save(int idleHopsThreshold)
+    public void Save(int idleHopsThreshold, bool aiImprovedTextEnabled, string aiUrl, string aiApiKey, string aiProvider, string aiModel)
     {
         if (idleHopsThreshold <= 0)
             throw new ArgumentOutOfRangeException(nameof(idleHopsThreshold), "Must be a positive integer.");
 
         IdleHopsThreshold = idleHopsThreshold;
+        AiImprovedTextEnabled = aiImprovedTextEnabled;
+        AiUrl = string.IsNullOrWhiteSpace(aiUrl) ? AiDefaults.Url : aiUrl;
+        AiApiKey = string.IsNullOrWhiteSpace(aiApiKey) ? AiDefaults.ApiKey : aiApiKey;
+        AiProvider = string.IsNullOrWhiteSpace(aiProvider) ? AiDefaults.Provider : aiProvider;
+        AiModel = string.IsNullOrWhiteSpace(aiModel) ? AiDefaults.Model : aiModel;
 
         var directory = Path.GetDirectoryName(_filePath);
         if (!string.IsNullOrEmpty(directory))
             Directory.CreateDirectory(directory);
 
-        File.WriteAllText(_filePath, JsonSerializer.Serialize(new SettingsData(idleHopsThreshold)));
+        File.WriteAllText(_filePath, JsonSerializer.Serialize(
+            new SettingsData(IdleHopsThreshold, AiImprovedTextEnabled, AiUrl, AiApiKey, AiProvider, AiModel)));
         Changed?.Invoke();
     }
 
-    private record SettingsData(int IdleHopsThreshold);
+    private record SettingsData(
+        int IdleHopsThreshold,
+        bool? AiImprovedTextEnabled,
+        string? AiUrl = null,
+        string? AiApiKey = null,
+        string? AiProvider = null,
+        string? AiModel = null);
 }

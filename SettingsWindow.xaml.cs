@@ -20,8 +20,18 @@ public partial class SettingsWindow : Window
         HopsInput.Focus();
         UpdateSecondsLabel();
 
+        AiImprovedTextCheckBox.IsChecked = App.Settings.AiImprovedTextEnabled;
+        AiUrlInput.Text = App.Settings.AiUrl;
+        AiApiKeyInput.Text = App.Settings.AiApiKey;
+        AiProviderInput.Text = App.Settings.AiProvider;
+        AiModelInput.Text = App.Settings.AiModel;
+        AiFieldsPanel.IsEnabled = App.Settings.AiImprovedTextEnabled;
+
         DataObject.AddPastingHandler(HopsInput, HopsInput_Pasting);
     }
+
+    private void AiImprovedTextCheckBox_CheckedChanged(object sender, RoutedEventArgs e) =>
+        AiFieldsPanel.IsEnabled = AiImprovedTextCheckBox.IsChecked ?? false;
 
     private void HopsInput_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
     {
@@ -61,7 +71,13 @@ public partial class SettingsWindow : Window
             return;
         }
 
-        App.Settings.Save(hops);
+        App.Settings.Save(
+            hops,
+            AiImprovedTextCheckBox.IsChecked ?? false,
+            AiUrlInput.Text,
+            AiApiKeyInput.Text,
+            AiProviderInput.Text,
+            AiModelInput.Text);
         Close();
     }
 
