@@ -13,6 +13,9 @@ x86/
 *.userosscache
 *.sln.docstates
 
+# IntelliJ files
+/.idea
+
 # ReSharper
 _ReSharper*/
 *.[Rr]e[Ss]harper
