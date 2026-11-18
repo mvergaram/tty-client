@@ -27,7 +27,7 @@ public static class AiDefaults
         'PLEALE CONTINUZ TO HOLD...' → 'PLEASE CONTINUE TO HOLD...'
         'PLEASE CONTINNDMM HOLD...' → 'PLEASE CONTINUE TO HOLD...'
         'PLEWQE CONOINUE OO HOGD...' → 'PLEASE CONTINUE TO HOLD...'
-        'K  TM 6-42"))78 MEMBER ENGLISH RT. PLEZLBOYPE GA OM COPINUEV GA' → 'THANKS FOR CALLING MEMBER ENGLISH RT. PLEASE TYPE GA TO CONTINUE. GA'
+        'K  TM 6-42"))78 MEMBER ENGLISH. PLEZLBOYPE GA OM COPINUEV GA' → 'THANKS FOR CALLING MEMBER ENGLISH. PLEASE TYPE GA TO CONTINUE. GA'
         These show the typical failure modes: dropped or substituted letters mid-word (LEASE→PLEASE, HMLD→HOLD), words fused or split by noise (CONTINNDMM→CONTINUE TO), and stretches so garbled they must be reconstructed from the known phrase they clearly are (the "THANKS FOR CALLING... GA" greeting), rather than transcribed literally.
         """;
 }
