@@ -83,7 +83,7 @@ dotnet run
 ```bash
 dotnet publish TtyClient.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
 ```
-The resulting `.exe` ends up at `bin\Release\net10.0-windows\win-x64\publish\TtyClient.exe`.
+The resulting `.exe` ends up at `bin\Release\net10.0-windows\win-x64\publish\TtyClient.exe`. You can find it in the [latest release](https://github.com/mvergaram/tty-client/releases/latest).
 
 ## Settings
 
@@ -96,18 +96,11 @@ All settings are saved as JSON in `%AppData%\TtyClient\settings.json`.
 
 **Default: 182 hops (~1 second)**
 
-How many consecutive silent moments (no TTY tone detected) must pass before the receiver resets
-back to the LTRS (letters) shift state, so the next message starts clean even if the remote end
-never resent a shift code. Only a positive integer is accepted; the dialog shows the equivalent
-time in seconds live. It only takes effect the next time you
-press "Start listening" or import a WAV file — it doesn't change a capture that's already running.
+How many consecutive silent moments (no TTY tone detected) must pass before the receiver resets back to the LTRS (letters) shift state, so the next message starts clean even if the remote end never resent a shift code. Only a positive integer is accepted; the dialog shows the equivalent time in seconds live. It only takes effect the next time you press "Start listening" or import a WAV file — it doesn't change a capture that's already running.
 
 ### Improve received text with AI
 
-Checkbox that, once enabled, runs every received message through an LLM (via
-[Portkey](https://portkey.ai/docs/introduction/what-is-portkey)) to clean up typos caused by audio
-noise or FIGS/LTRS shift mix-ups. Default: **disabled**. Checking it reveals five more fields,
-grayed out until then:
+Checkbox that, once enabled, runs every received message through an LLM (via [Portkey](https://portkey.ai/docs/introduction/what-is-portkey)) to clean up typos caused by audio noise or FIGS/LTRS shift mix-ups. Default: **disabled**. Checking it reveals five more fields, grayed out until then:
 
 | Field | Default | Where to get it for your own setup |
 |---|---|---|
@@ -117,9 +110,7 @@ grayed out until then:
 | **Model** | `anthropic.claude-haiku-5-5` | The model ID exposed by that provider integration, listed in Portkey's [Model Catalog](https://portkey.ai/docs/product/model-catalog) or at [portkey.ai/models](https://portkey.ai/models). |
 | **Max output tokens** | `1000` | Caps the length (and cost) of the AI's reply; raise it only if replies are getting cut off. |
 
-A field left blank (or, for "Max output tokens", set to zero/negative) falls back to its own
-default independently. Unlike the hops setting above, these AI fields apply immediately on Save,
-even to a call already in progress.
+A field left blank (or, for "Max output tokens", set to zero/negative) falls back to its own default independently. Unlike the hops setting above, these AI fields apply immediately on Save, even to a call already in progress.
 
 ## GitHub build and release
 
