@@ -19,6 +19,7 @@ public sealed class AppSettings
     public string AiApiKey { get; private set; } = AiDefaults.ApiKey;
     public string AiProvider { get; private set; } = AiDefaults.Provider;
     public string AiModel { get; private set; } = AiDefaults.Model;
+    public int AiMaxOutputTokens { get; private set; } = AiDefaults.MaxOutputTokens;
 
     public event Action? Changed;
 
@@ -58,6 +59,8 @@ public sealed class AppSettings
                     AiProvider = data.AiProvider;
                 if (!string.IsNullOrWhiteSpace(data.AiModel))
                     AiModel = data.AiModel;
+                if (data.AiMaxOutputTokens is > 0)
+                    AiMaxOutputTokens = data.AiMaxOutputTokens.Value;
             }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
@@ -67,7 +70,7 @@ public sealed class AppSettings
         }
     }
 
-    public void Save(int idleHopsThreshold, bool aiImprovedTextEnabled, string aiUrl, string aiApiKey, string aiProvider, string aiModel)
+    public void Save(int idleHopsThreshold, bool aiImprovedTextEnabled, string aiUrl, string aiApiKey, string aiProvider, string aiModel, int aiMaxOutputTokens)
     {
         if (idleHopsThreshold <= 0)
             throw new ArgumentOutOfRangeException(nameof(idleHopsThreshold), "Must be a positive integer.");
@@ -78,13 +81,14 @@ public sealed class AppSettings
         AiApiKey = string.IsNullOrWhiteSpace(aiApiKey) ? AiDefaults.ApiKey : aiApiKey;
         AiProvider = string.IsNullOrWhiteSpace(aiProvider) ? AiDefaults.Provider : aiProvider;
         AiModel = string.IsNullOrWhiteSpace(aiModel) ? AiDefaults.Model : aiModel;
+        AiMaxOutputTokens = aiMaxOutputTokens > 0 ? aiMaxOutputTokens : AiDefaults.MaxOutputTokens;
 
         var directory = Path.GetDirectoryName(_filePath);
         if (!string.IsNullOrEmpty(directory))
             Directory.CreateDirectory(directory);
 
         File.WriteAllText(_filePath, JsonSerializer.Serialize(
-            new SettingsData(IdleHopsThreshold, AiImprovedTextEnabled, AiUrl, AiApiKey, AiProvider, AiModel)));
+            new SettingsData(IdleHopsThreshold, AiImprovedTextEnabled, AiUrl, AiApiKey, AiProvider, AiModel, AiMaxOutputTokens)));
         Changed?.Invoke();
     }
 
@@ -94,5 +98,6 @@ public sealed class AppSettings
         string? AiUrl = null,
         string? AiApiKey = null,
         string? AiProvider = null,
-        string? AiModel = null);
+        string? AiModel = null,
+        int? AiMaxOutputTokens = null);
 }

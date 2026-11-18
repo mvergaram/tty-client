@@ -69,7 +69,8 @@ public partial class CallConversationView : UserControl
     }
 
     private static PortkeyChatClient BuildAiClient() => new(
-        App.Settings.AiUrl, App.Settings.AiApiKey, App.Settings.AiProvider, App.Settings.AiModel, AiDefaults.SystemPrompt);
+        App.Settings.AiUrl, App.Settings.AiApiKey, App.Settings.AiProvider, App.Settings.AiModel,
+        AiDefaults.SystemPrompt, App.Settings.AiMaxOutputTokens);
 
     private void UpdateAiBadgeVisibility() =>
         AiBadge.Visibility = App.Settings.AiImprovedTextEnabled ? Visibility.Visible : Visibility.Collapsed;

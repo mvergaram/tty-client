@@ -19,8 +19,9 @@ public sealed class PortkeyChatClient
 {
     private readonly ChatClient _chatClient;
     private readonly string _systemPrompt;
+    private readonly int _maxOutputTokens;
 
-    public PortkeyChatClient(string endpointUrl, string apiKey, string provider, string model, string systemPrompt)
+    public PortkeyChatClient(string endpointUrl, string apiKey, string provider, string model, string systemPrompt, int maxOutputTokens)
     {
         var headers = new Dictionary<string, string>
         {
@@ -33,13 +34,17 @@ public sealed class PortkeyChatClient
 
         _chatClient = new OpenAIClient(new ApiKeyCredential("dummy"), options).GetChatClient(model);
         _systemPrompt = systemPrompt;
+        _maxOutputTokens = maxOutputTokens;
     }
 
     public async Task<string> ImproveTextAsync(string originalText, CancellationToken cancellationToken)
     {
+        var options = new ChatCompletionOptions { MaxOutputTokenCount = _maxOutputTokens };
+
         ChatCompletion completion = await _chatClient.CompleteChatAsync(
             [new SystemChatMessage(_systemPrompt), new UserChatMessage(originalText)],
-            cancellationToken: cancellationToken);
+            options,
+            cancellationToken);
 
         return completion.Content[0].Text.Trim();
     }

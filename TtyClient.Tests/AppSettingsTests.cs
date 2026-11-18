@@ -10,7 +10,7 @@ public class AppSettingsTests
         Path.Combine(Path.GetTempPath(), $"tty-settings-{Guid.NewGuid()}.json");
 
     private static void SaveDefaults(AppSettings settings, int idleHopsThreshold, bool aiImprovedTextEnabled = false) =>
-        settings.Save(idleHopsThreshold, aiImprovedTextEnabled, AiDefaults.Url, AiDefaults.ApiKey, AiDefaults.Provider, AiDefaults.Model);
+        settings.Save(idleHopsThreshold, aiImprovedTextEnabled, AiDefaults.Url, AiDefaults.ApiKey, AiDefaults.Provider, AiDefaults.Model, AiDefaults.MaxOutputTokens);
 
     [Fact]
     public void Save_PersistsAndReloadsIdleHopsThreshold()
@@ -141,7 +141,7 @@ public class AppSettingsTests
         try
         {
             var first = new AppSettings(path);
-            first.Save(321, true, "https://custom.example/v1", "custom-key", "custom-provider", "custom-model");
+            first.Save(321, true, "https://custom.example/v1", "custom-key", "custom-provider", "custom-model", 2500);
 
             var second = new AppSettings(path);
 
@@ -149,6 +149,7 @@ public class AppSettingsTests
             Assert.Equal("custom-key", second.AiApiKey);
             Assert.Equal("custom-provider", second.AiProvider);
             Assert.Equal("custom-model", second.AiModel);
+            Assert.Equal(2500, second.AiMaxOutputTokens);
         }
         finally
         {
@@ -165,12 +166,59 @@ public class AppSettingsTests
         try
         {
             var settings = new AppSettings(path);
-            settings.Save(321, true, blank, blank, blank, blank);
+            settings.Save(321, true, blank, blank, blank, blank, AiDefaults.MaxOutputTokens);
 
             Assert.Equal(AiDefaults.Url, settings.AiUrl);
             Assert.Equal(AiDefaults.ApiKey, settings.AiApiKey);
             Assert.Equal(AiDefaults.Provider, settings.AiProvider);
             Assert.Equal(AiDefaults.Model, settings.AiModel);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void Constructor_MissingFile_UsesDefaultMaxOutputTokens()
+    {
+        var path = TempSettingsPath(); // never written
+
+        var settings = new AppSettings(path);
+
+        Assert.Equal(AiDefaults.MaxOutputTokens, settings.AiMaxOutputTokens);
+    }
+
+    [Fact]
+    public void Constructor_FileFromOlderVersionMissingMaxOutputTokens_UsesDefault()
+    {
+        var path = TempSettingsPath();
+        try
+        {
+            File.WriteAllText(path, """{"IdleHopsThreshold":321}""");
+
+            var settings = new AppSettings(path);
+
+            Assert.Equal(AiDefaults.MaxOutputTokens, settings.AiMaxOutputTokens);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-5)]
+    public void Save_NonPositiveMaxOutputTokens_FallsBackToDefault(int invalidValue)
+    {
+        var path = TempSettingsPath();
+        try
+        {
+            var settings = new AppSettings(path);
+            settings.Save(321, true, AiDefaults.Url, AiDefaults.ApiKey, AiDefaults.Provider, AiDefaults.Model, invalidValue);
+
+            Assert.Equal(AiDefaults.MaxOutputTokens, settings.AiMaxOutputTokens);
         }
         finally
         {

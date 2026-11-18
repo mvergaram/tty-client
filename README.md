@@ -4,9 +4,13 @@
 
 TTY/TDD software client for Windows 11 that captures softphone call audio and decodes/encodes Baudot FSK tones in real time.
 
-![TTY Client app screenshot 1](readme_images/app_screenshot1.png)
+![TTY Client app screenshot main page](readme_images/app_screenshot.png "app screenshot main page")
 
-![TTY Client app screenshot 2](readme_images/app_screenshot2.png)
+![TTY Client app screenshot main page listening](readme_images/app_screenshot_listening.png "app screenshot main page listening")
+>
+
+![TTY Client app screenshot files view](readme_images/app_screenshot_files.png "app screenshot files view")
+>
 
 ## TTY Protocol
 
@@ -36,8 +40,8 @@ See [`AGENTS.md`](AGENTS.md) for the fixed-parameters table and the full decode/
 ## Requirements
 
 - Windows 11
-- .NET 10 Desktop Runtime (or build/publish self-contained, see below)
-- **[VB-CABLE Virtual Audio Device](https://vb-audio.com/Cable/)** — free virtual audio driver, **required** to send the synthesized TTY tones to your softphone
+- [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/es-es/download/dotnet/10.0) (or build/publish self-contained, see below) - C# build libraries
+- [VB-CABLE Virtual Audio Device](https://vb-audio.com/Cable/) — free virtual audio driver, **required** to send the synthesized TTY tones to your softphone
 
 ### Why is VB-CABLE needed?
 
@@ -60,7 +64,7 @@ Once installed, VB-CABLE adds the **CABLE Input** (playback) and **CABLE Output*
 ![TTY Client and softphone device configuration side by side](readme_images/tty_and_skype_config.png)
 > Side-by-side device configuration — TTY Client's "Hearing TTY codes from"/"Sending TTY codes to" selectors on the left, the softphone's microphone/speaker settings on the right:
 
-## Test, Build and run
+## Test, Build and Run
 
 Run the test suite with:
 ```bash
@@ -80,6 +84,42 @@ dotnet run
 dotnet publish TtyClient.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
 ```
 The resulting `.exe` ends up at `bin\Release\net10.0-windows\win-x64\publish\TtyClient.exe`.
+
+## Settings
+
+![TTY Client app screenshot settings](readme_images/app_screenshot_settings.png "app screenshot settings")
+
+Open it with the gear button next to the "TTY Client" title, in the top right of the main window.
+All settings are saved as JSON in `%AppData%\TtyClient\settings.json`.
+
+### Silent hops to reset FIGS shift
+
+**Default: 182 hops (~1 second)**
+
+How many consecutive silent moments (no TTY tone detected) must pass before the receiver resets
+back to the LTRS (letters) shift state, so the next message starts clean even if the remote end
+never resent a shift code. Only a positive integer is accepted; the dialog shows the equivalent
+time in seconds live. It only takes effect the next time you
+press "Start listening" or import a WAV file — it doesn't change a capture that's already running.
+
+### Improve received text with AI
+
+Checkbox that, once enabled, runs every received message through an LLM (via
+[Portkey](https://portkey.ai/docs/introduction/what-is-portkey)) to clean up typos caused by audio
+noise or FIGS/LTRS shift mix-ups. Default: **disabled**. Checking it reveals five more fields,
+grayed out until then:
+
+| Field | Default | Where to get it for your own setup |
+|---|---|---|
+| **AI endpoint URL** | `https://api.portkey.ai/v1` | Portkey Cloud's gateway URL; change it only if you run a [self-hosted Portkey gateway](https://portkey.ai/docs/product/open-source). |
+| **API key** | *(empty)* | Create one from your account's [Portkey API Keys](https://portkey.ai/docs/api-reference/admin-api/introduction#creating-and-managing-api-keys) page. |
+| **Provider** | `dsvertex` | The slug of an AI provider integration (OpenAI, Azure OpenAI, Vertex AI, Bedrock, etc.) configured in your Portkey [Model Catalog](https://portkey.ai/docs/product/model-catalog) — ask whoever administers your organization's Portkey account for the slug to use. |
+| **Model** | `anthropic.claude-haiku-5-5` | The model ID exposed by that provider integration, listed in Portkey's [Model Catalog](https://portkey.ai/docs/product/model-catalog) or at [portkey.ai/models](https://portkey.ai/models). |
+| **Max output tokens** | `1000` | Caps the length (and cost) of the AI's reply; raise it only if replies are getting cut off. |
+
+A field left blank (or, for "Max output tokens", set to zero/negative) falls back to its own
+default independently. Unlike the hops setting above, these AI fields apply immediately on Save,
+even to a call already in progress.
 
 ## GitHub build and release
 

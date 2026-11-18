@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Settings"
         Icon="Assets/icon.ico"
-        Height="520" Width="480"
+        Height="580" Width="480"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         Background="#1E1E2E"
@@ -75,14 +75,34 @@
                      Background="#313244" Foreground="#CDD6F4"
                      BorderThickness="1" BorderBrush="#45475A"
                      Padding="8,6" FontFamily="Consolas" FontSize="13"
-                     CaretBrush="#CDD6F4"/>
+                     CaretBrush="#CDD6F4" Margin="0,0,0,10"/>
+
+            <TextBlock Text="Max output tokens" Foreground="#CDD6F4" FontSize="12" Margin="0,0,0,4"/>
+            <TextBox x:Name="AiMaxOutputTokensInput"
+                     Background="#313244" Foreground="#CDD6F4"
+                     BorderThickness="1" BorderBrush="#45475A"
+                     Padding="8,6" FontFamily="Consolas" FontSize="13"
+                     CaretBrush="#CDD6F4" MaxLength="9"
+                     PreviewTextInput="HopsInput_PreviewTextInput"/>
         </StackPanel>
 
-        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Cancel" Style="{StaticResource ActionButton}"
-                    Margin="0,0,8,0" Click="BtnCancel_Click"/>
-            <Button Content="Save" Style="{StaticResource SendButton}"
-                    Click="BtnSave_Click"/>
-        </StackPanel>
+        <Grid Grid.Row="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="12">
+                <Hyperlink NavigateUri="https://github.com/mvergaram/tty-client#settings"
+                           Foreground="#89B4FA" Click="SettingsInfoLink_Click">settings info</Hyperlink>
+            </TextBlock>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancel" Style="{StaticResource ActionButton}"
+                        Margin="0,0,8,0" Click="BtnCancel_Click"/>
+                <Button Content="Save" Style="{StaticResource SendButton}"
+                        Click="BtnSave_Click"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>
