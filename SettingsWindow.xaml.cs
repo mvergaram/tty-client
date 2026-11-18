@@ -25,9 +25,11 @@ public partial class SettingsWindow : Window
         AiApiKeyInput.Text = App.Settings.AiApiKey;
         AiProviderInput.Text = App.Settings.AiProvider;
         AiModelInput.Text = App.Settings.AiModel;
+        AiMaxOutputTokensInput.Text = App.Settings.AiMaxOutputTokens.ToString(CultureInfo.InvariantCulture);
         AiFieldsPanel.IsEnabled = App.Settings.AiImprovedTextEnabled;
 
         DataObject.AddPastingHandler(HopsInput, HopsInput_Pasting);
+        DataObject.AddPastingHandler(AiMaxOutputTokensInput, HopsInput_Pasting);
     }
 
     private void AiImprovedTextCheckBox_CheckedChanged(object sender, RoutedEventArgs e) =>
@@ -71,13 +73,16 @@ public partial class SettingsWindow : Window
             return;
         }
 
+        int.TryParse(AiMaxOutputTokensInput.Text, NumberStyles.None, CultureInfo.InvariantCulture, out var maxOutputTokens);
+
         App.Settings.Save(
             hops,
             AiImprovedTextCheckBox.IsChecked ?? false,
             AiUrlInput.Text,
             AiApiKeyInput.Text,
             AiProviderInput.Text,
-            AiModelInput.Text);
+            AiModelInput.Text,
+            maxOutputTokens);
         Close();
     }
 

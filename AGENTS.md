@@ -53,7 +53,7 @@ tty-client/
 │   ├── CallConversationView.xaml(.cs)  # Live call interface: input/output devices, start/stop listening, send text via virtual microphone
 │   └── AudioFilesView.xaml(.cs)        # Files interface: text → WAV ("Save WAV") and WAV → text ("Import WAV")
 ├── AI/
-│   ├── AiDefaults.cs              # Default Url/ApiKey/Provider/Model/SystemPrompt for the AI settings
+│   ├── AiDefaults.cs              # Default Url/ApiKey/Provider/Model/MaxOutputTokens/SystemPrompt for the AI settings
 │   ├── PortkeyChatClient.cs       # OpenAI ChatClient wrapped with Portkey's gateway headers (see AI improved text)
 │   └── CallTranscriptLogger.cs    # JSON Lines writer for each call's transcription/<timestamp>Z.txt
 ├── AppSettings.cs              # Persisted user settings (JSON in %AppData%\TtyClient\settings.json) — IdleHopsThreshold + all AI settings
@@ -113,13 +113,15 @@ clean up typos caused by audio noise or FIGS/LTRS shift mix-ups. **Disabled by d
   message>` is appended instead (red/pink, `#F38BA8`) — a `System.ClientModel.ClientResultException`
   (an HTTP-level failure from Portkey/OpenAI) shows its status code and message; any other exception
   shows just its message. Failures are always shown on screen, never silent.
-- **Configuration**: URL, API key, provider, and model are separate fields in `SettingsWindow`
-  (see [Settings](#settings)), persisted alongside everything else in
+- **Configuration**: URL, API key, provider, model, and max output tokens
+  (`ChatCompletionOptions.MaxOutputTokenCount`, capping response length/cost) are separate fields
+  in `SettingsWindow` (see [Settings](#settings)), persisted alongside everything else in
   `%AppData%\TtyClient\settings.json` — there is no separate config file. A blank field falls back
-  to its own default independently (`AI/AiDefaults.cs`). The system prompt is not user-editable; it
-  is a fixed default in `AiDefaults.SystemPrompt`. Unlike the FIGS-reset hops threshold, editing any
-  AI field and saving takes effect on the very next message, with no restart needed —
-  `CallConversationView` rebuilds its `PortkeyChatClient` on `AppSettings.Changed`.
+  to its own default independently (`AI/AiDefaults.cs`); max output tokens falls back the same way
+  when zero or negative. The system prompt is not user-editable; it is a fixed default in
+  `AiDefaults.SystemPrompt`. Unlike the FIGS-reset hops threshold, editing any AI field and saving
+  takes effect on the very next message, with no restart needed — `CallConversationView` rebuilds
+  its `PortkeyChatClient` on `AppSettings.Changed`.
 - **Call transcript log**: every received message, sent message, and AI result/error for a call is
   appended as one JSON object per line (`AI/CallTranscriptLogger.cs`) to
   `transcription/<call-start-UTC>Z.txt` next to the `.exe`, e.g. `2026-03-05_14-23-05Z.txt`. A
@@ -150,9 +152,10 @@ The gear button at the top right of `MainWindow` (opposite the "TTY Client" titl
   accepts positive integers; the dialog shows the equivalent time ("~ X sec.") live and
   validates on Save.
 - **Improve received text with AI** — toggles `AiImprovedTextEnabled` (see
-  [AI improved text](#ai-improved-text)). Default: **disabled**. Checking it enables four more
-  fields — **AI endpoint URL**, **API key**, **Provider**, **Model** — which are grayed out while
-  unchecked; all four fall back to `AI/AiDefaults.cs` defaults when left blank.
+  [AI improved text](#ai-improved-text)). Default: **disabled**. Checking it enables five more
+  fields — **AI endpoint URL**, **API key**, **Provider**, **Model**, **Max output tokens** — which
+  are grayed out while unchecked; all fall back to `AI/AiDefaults.cs` defaults when left blank
+  (or, for Max output tokens, when zero/negative — unlike the hops field, it never blocks Save).
 
 Persisted via `AppSettings` to `%AppData%\TtyClient\settings.json`. The FIGS-reset threshold only
 takes effect the next time "Start listening" is pressed (`CallConversationView`) or a WAV is

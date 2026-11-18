@@ -11,6 +11,7 @@ public static class AiDefaults
     public const string ApiKey = "";
     public const string Provider = "dsvertex";
     public const string Model = "anthropic.claude-haiku-5-5";
+    public const int MaxOutputTokens = 1000;
 
     public const string SystemPrompt = """
         You are a correction assistant for TTY/TDD (Telecommunications Device for the Deaf) transcripts.

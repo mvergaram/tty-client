@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Settings"
         Icon="Assets/icon.ico"
-        Height="520" Width="480"
+        Height="580" Width="480"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         Background="#1E1E2E"
@@ -75,7 +75,15 @@
                      Background="#313244" Foreground="#CDD6F4"
                      BorderThickness="1" BorderBrush="#45475A"
                      Padding="8,6" FontFamily="Consolas" FontSize="13"
-                     CaretBrush="#CDD6F4"/>
+                     CaretBrush="#CDD6F4" Margin="0,0,0,10"/>
+
+            <TextBlock Text="Max output tokens" Foreground="#CDD6F4" FontSize="12" Margin="0,0,0,4"/>
+            <TextBox x:Name="AiMaxOutputTokensInput"
+                     Background="#313244" Foreground="#CDD6F4"
+                     BorderThickness="1" BorderBrush="#45475A"
+                     Padding="8,6" FontFamily="Consolas" FontSize="13"
+                     CaretBrush="#CDD6F4" MaxLength="9"
+                     PreviewTextInput="HopsInput_PreviewTextInput"/>
         </StackPanel>
 
         <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">
