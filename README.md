@@ -4,9 +4,11 @@
 
 TTY/TDD software client for Windows 11 that captures softphone call audio and decodes/encodes Baudot FSK tones in real time.
 
-![TTY Client app screenshot 1](readme_images/app_screenshot1.png)
+![TTY Client app screenshot main page](readme_images/app_screenshot.png "app screenshot main page")
 
-![TTY Client app screenshot 2](readme_images/app_screenshot2.png)
+![TTY Client app screenshot main page listening](readme_images/app_screenshot_listening.png "app screenshot main page listening")
+
+![TTY Client app screenshot files view](readme_images/app_screenshot_files.png "app screenshot files view")
 
 ## TTY Protocol
 
@@ -82,6 +84,8 @@ dotnet publish TtyClient.csproj -c Release -r win-x64 --self-contained true -p:P
 The resulting `.exe` ends up at `bin\Release\net10.0-windows\win-x64\publish\TtyClient.exe`.
 
 ## Settings
+
+![TTY Client app screenshot settings](readme_images/app_screenshot_settings.png "app screenshot settings")
 
 Open it with the gear button next to the "TTY Client" title, in the top right of the main window.
 All settings are saved as JSON in `%AppData%\TtyClient\settings.json`.
