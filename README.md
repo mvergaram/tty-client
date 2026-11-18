@@ -7,8 +7,10 @@ TTY/TDD software client for Windows 11 that captures softphone call audio and de
 ![TTY Client app screenshot main page](readme_images/app_screenshot.png "app screenshot main page")
 
 ![TTY Client app screenshot main page listening](readme_images/app_screenshot_listening.png "app screenshot main page listening")
+>
 
 ![TTY Client app screenshot files view](readme_images/app_screenshot_files.png "app screenshot files view")
+>
 
 ## TTY Protocol
 
@@ -38,8 +40,8 @@ See [`AGENTS.md`](AGENTS.md) for the fixed-parameters table and the full decode/
 ## Requirements
 
 - Windows 11
-- .NET 10 Desktop Runtime (or build/publish self-contained, see below)
-- **[VB-CABLE Virtual Audio Device](https://vb-audio.com/Cable/)** — free virtual audio driver, **required** to send the synthesized TTY tones to your softphone
+- [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/es-es/download/dotnet/10.0) (or build/publish self-contained, see below) - C# build libraries
+- [VB-CABLE Virtual Audio Device](https://vb-audio.com/Cable/) — free virtual audio driver, **required** to send the synthesized TTY tones to your softphone
 
 ### Why is VB-CABLE needed?
 
