@@ -1,8 +1,10 @@
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using TtyClient.TTY;
 
 namespace TtyClient;
@@ -87,4 +89,7 @@ public partial class SettingsWindow : Window
     }
 
     private void BtnCancel_Click(object sender, RoutedEventArgs e) => Close();
+
+    private void SettingsInfoLink_Click(object sender, RoutedEventArgs e) =>
+        Process.Start(new ProcessStartInfo(((Hyperlink)sender).NavigateUri.ToString()) { UseShellExecute = true });
 }
