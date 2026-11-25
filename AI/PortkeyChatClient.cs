@@ -41,10 +41,24 @@ public sealed class PortkeyChatClient
     {
         var options = new ChatCompletionOptions { MaxOutputTokenCount = _maxOutputTokens };
 
-        ChatCompletion completion = await _chatClient.CompleteChatAsync(
-            [new SystemChatMessage(_systemPrompt), new UserChatMessage(originalText)],
-            options,
-            cancellationToken);
+        ChatCompletion completion;
+        try
+        {
+            completion = await _chatClient.CompleteChatAsync(
+                [new SystemChatMessage(_systemPrompt), new UserChatMessage(originalText)],
+                options,
+                cancellationToken);
+        }
+        catch (ArgumentOutOfRangeException ex) when (ex.Message.StartsWith("Unknown ChatFinishReason value.", StringComparison.Ordinal))
+        {
+            // OpenAI.Chat.ChatFinishReason only knows OpenAI's own 5 values (stop, length,
+            // tool_calls, content_filter, function_call). Some models behind Portkey (e.g.
+            // Anthropic models, which can report stop_reason "refusal" when a safety
+            // classifier halts generation) return a finish reason the SDK doesn't recognize,
+            // and it throws while parsing the response instead of returning a ChatCompletion.
+            // Surface that as a readable message instead of the raw SDK parsing exception.
+            throw new InvalidOperationException($"the model declined to respond (reason: {ex.ActualValue})", ex);
+        }
 
         return completion.Content[0].Text.Trim();
     }
@@ -61,8 +75,15 @@ public sealed class PortkeyChatClient
 
         public override ValueTask ProcessAsync(PipelineMessage message, IReadOnlyList<PipelinePolicy> pipeline, int index)
         {
-            Process(message, pipeline, index);
-            return ValueTask.CompletedTask;
+            // Must continue through the async chain (ProcessAsync), not the sync one
+            // (Process): delegating to the sync chain here forces the real HTTP
+            // transport to send the request synchronously, blocking whichever thread
+            // called ImproveTextAsync (the WPF UI thread) for the whole round-trip.
+            foreach (var header in headers)
+                message.Request.Headers.Set(header.Key, header.Value);
+            return index < pipeline.Count
+                ? pipeline[index].ProcessAsync(message, pipeline, index + 1)
+                : ValueTask.CompletedTask;
         }
     }
 }

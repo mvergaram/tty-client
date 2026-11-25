@@ -47,8 +47,8 @@ $RECYCLE.BIN/
 .claude/settings.local.json
 CLAUDE.local.md
 
-# local presentation for demo
-/presentation
-
 # audacity script for tty code generator
 nyquist TTY audio script for audacity.txt
+
+# local pendings management
+to-do.txt

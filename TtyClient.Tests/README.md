@@ -1,8 +1,8 @@
 # TtyClient.Tests
 
-xUnit test suite for the `TtyClient` project. It covers the TTY protocol stack (Baudot encode/decode, Goertzel tone detection, bit synchronization, FSK synthesis) and the `Audio` classes that don't need a real device (`AudioResampler`, `AudioEndpointInfo`, `WavFileHandler`) with unit and round-trip tests, plus two packaging/regression checks. The classes that wrap live WASAPI devices (`AudioCapture`, `VirtualMicInjector`) have their pure, hardware-independent logic (format validation, virtual-device name matching) extracted into small `internal` methods and tested directly; the rest of those classes, and the WPF layer (`App`, `MainWindow`, the `Views`), have no automated tests and are validated manually (see [`../AGENTS.md`](../AGENTS.md)).
+xUnit test suite for the `TtyClient` project. It covers the TTY protocol stack (Baudot encode/decode, Goertzel tone detection, bit synchronization, FSK synthesis) and the `Audio` classes that don't need a real device (`AudioResampler`, `AudioEndpointInfo`, `WavFileHandler`) with unit and round-trip tests, plus two packaging/regression checks. The classes that wrap live WASAPI devices (`AudioCapture`, `VirtualMicInjector`) have their pure, hardware-independent logic (format validation, virtual-device name matching) extracted into small `internal` methods and tested directly, and `SettingsWindow`'s hops-validation/seconds-label logic is extracted the same way. `AI/PortkeyChatClient.cs` is tested against a real local `HttpListener` loopback server instead of a mock. The rest of the WPF layer (`App`, `MainWindow`, the `Views`), have no automated tests and are validated manually (see [`../AGENTS.md`](../AGENTS.md)).
 
-`TtyClient.csproj` exposes `internal` members to this project via `InternalsVisibleTo`, so tests can call `BaudotTables`, `WavFileHandler`, `AudioCapture.EnsureSupportedFormat`, and `VirtualMicInjector.IsVirtualAudioDeviceName` directly.
+`TtyClient.csproj` exposes `internal` members to this project via `InternalsVisibleTo`, so tests can call `BaudotTables`, `WavFileHandler`, `AudioCapture.EnsureSupportedFormat`, `VirtualMicInjector.IsVirtualAudioDeviceName`, and `SettingsWindow.TryParsePositiveHops`/`FormatSecondsLabel`/`DigitsOnly` directly.
 
 ## Running the tests
 
@@ -123,25 +123,45 @@ Not a test of app logic — a build/packaging sanity check on `TtyClient.csproj`
 
 - `BuildOutputDoesNotContainTestAudioAssets` — runs `dotnet build TtyClient.csproj -c Release` into a temp folder and asserts no `*.wav` file (e.g. the test fixtures) leaks into the shipped output.
 
+### `PortkeyChatClientTests.cs`
+Target: `AI/PortkeyChatClient.cs` (`PortkeyChatClient`). Each test starts a real local `System.Net.HttpListener` on a free loopback port and points the client at it instead of the real Portkey/OpenAI endpoint — no mocking framework.
+
+- `Constructor_ProviderHeader_NormalizesLeadingAtSign` — a plain provider name and one already prefixed with `@` both produce the exact same `x-portkey-provider` header (`TrimStart('@')` collapses any number of leading `@`s to one); also verifies `x-portkey-api-key` is forwarded unchanged.
+- `ImproveTextAsync_SuccessResponse_ReturnsTrimmedContent` — a minimal OpenAI-shaped `chat.completion` JSON response is returned and its content trimmed.
+- `ImproveTextAsync_NonSuccessStatus_ThrowsClientResultExceptionWithStatus` — a 401 response raises `System.ClientModel.ClientResultException` with `.Status == 401`.
+- `ImproveTextAsync_AlreadyCancelledToken_ThrowsOperationCanceledException` — an already-cancelled token raises `OperationCanceledException` (or the derived `TaskCanceledException`) without needing a server response.
+- `Constructor_InvalidEndpointUrl_ThrowsUriFormatException` — a malformed endpoint URL throws synchronously from the constructor.
+
+### `SettingsWindowTests.cs`
+Target: `SettingsWindow.xaml.cs`'s pure validation/formatting logic, extracted into `internal static` members (`TryParsePositiveHops`, `FormatSecondsLabel`, `DigitsOnly`) following the same pattern as `AudioCapture.EnsureSupportedFormat`/`VirtualMicInjector.IsVirtualAudioDeviceName` — instantiating the real WPF `Window` isn't viable in this suite (no STA/dispatcher scaffolding, hardwired to the real `App.Settings` singleton, and invalid input pops a real blocking `MessageBox`).
+
+- `TryParsePositiveHops_VariousInputs_ReturnsExpectedResult` — valid positive integers parse; zero, blank, non-numeric, and `int`-overflow text all fail without throwing.
+- `FormatSecondsLabel_InvalidOrNonPositiveInput_ReturnsPlaceholder` / `FormatSecondsLabel_ValidHops_ReturnsFormattedSeconds` — the live "~ X sec." label text for valid vs. invalid hops input.
+- `DigitsOnly_VariousInputs_MatchesOnlyPlainDigits` — the regex used to filter keystrokes/paste accepts only digit-only strings.
+
 ## Code coverage per app class
 
-Measured with `dotnet test --collect:"XPlat Code Coverage"` (72/72 tests passing at time of writing). Percentages are a point-in-time snapshot — regenerate them with the command above to check current numbers.
+Measured with `dotnet test --collect:"XPlat Code Coverage"` (122/122 tests passing at time of writing). Percentages are a point-in-time snapshot — regenerate them with the command above to check current numbers.
 
 | Class | Line | Branch | Covered by |
 |---|---|---|---|
 | `TTY.BaudotEncoder` | 100% | 100% | `BaudotEncoderTests` |
 | `TTY.BaudotTables` | 100% | 100% | indirectly, via `BaudotDecoderTests` / `BaudotEncoderTests` |
 | `TTY.FSKSynthesizer` | 100% | 100% | `FSKSynthesizerTests` |
+| `TTY.BaudotDecoder` | 100% | 100% | `BaudotDecoderTests` |
+| `TTY.BitSynchronizer` | 100% | 100% | `BitSynchronizerTests` |
+| `TTY.GoertzelDetector` | 100% | 100% | `GoertzelDetectorTests` |
 | `Audio.AudioEndpointInfo` | 100% | 100% | `AudioEndpointInfoTests` |
-| `Audio.AudioResampler` | 100% | 78.57% | `AudioResamplerTests` |
-| `Audio.WavFileHandler` | 100% | 75% | `WavFileHandlerTests`, `WavDecodingTests` |
-| `TTY.BitSynchronizer` | 100% | 93.75% | `BitSynchronizerTests` |
-| `TTY.GoertzelDetector` | 100% | 93.75% | `GoertzelDetectorTests` |
-| `TTY.BaudotDecoder` | 100% | 90% | `BaudotDecoderTests` |
+| `Audio.AudioResampler` | 100% | 100% | `AudioResamplerTests` |
+| `Audio.WavFileHandler` | 100% | 100% | `WavFileHandlerTests`, `WavDecodingTests` (the stereo-to-mono branch is exercised by the stereo fixture among `Audios/*.wav`) |
+| `AI.PortkeyChatClient` | 100% | 100% | `PortkeyChatClientTests` (real local `HttpListener`, no mocks) |
+| `AppSettings` | 89.47% | 100% | `AppSettingsTests` |
+| `AI.CallTranscriptLogger` | 88.88% | 100% | `CallTranscriptLoggerTests` |
 | `Audio.AudioCapture` | 14.28% | 16.66% | `AudioCaptureFormatValidationTests` (only `EnsureSupportedFormat`; `GetInputDevices`/`Start`/`Stop`/`OnDataAvailable` need a real device) |
 | `Audio.VirtualMicInjector` | 7.89% | 20% | `VirtualMicInjectorDeviceFilterTests` (only `IsVirtualAudioDeviceName`; `Play`/`Stop`/`Dispose` need a real device) |
+| `SettingsWindow` | 15.38% | 40% | `SettingsWindowTests` (only `TryParsePositiveHops`/`FormatSecondsLabel`/`DigitsOnly`; the rest is WPF event-handler wiring, `MessageBox`, and the `App.Settings` singleton) |
 | `Views.AudioFilesView` | 0% | 0% | none — WPF view |
 | `Views.CallConversationView` | 0% | 0% | none — WPF view |
 | `App`, `MainWindow` | 0% | 0% | none — WPF shell |
 
-The TTY protocol core (Baudot encode/decode, bit framing, tone detection, FSK synthesis) and the hardware-independent `Audio` classes (`AudioResampler`, `AudioEndpointInfo`, `WavFileHandler`) are fully covered at the line level, with the remaining branch gaps being single defensive/edge branches (e.g. `BaudotDecoder`'s FIGS-unassigned-code paths, `BitSynchronizer`'s corrupted-stop-bit branch, `WavFileHandler`'s untaken stereo-to-mono branch since all fixtures are mono). `AudioCapture` and `VirtualMicInjector` only reach their extracted pure-logic methods (`EnsureSupportedFormat`, `IsVirtualAudioDeviceName`) — the rest of those classes, and the UI classes, require live WASAPI devices or interactive WPF rendering and are covered by manual testing instead (see [`../AGENTS.md`](../AGENTS.md)'s known limitations and the installation/setup steps in [`../README.md`](../README.md)).
+The TTY protocol core (Baudot encode/decode, bit framing, tone detection, FSK synthesis), the hardware-independent `Audio` classes (`AudioResampler`, `AudioEndpointInfo`, `WavFileHandler`), and `AI.PortkeyChatClient` are fully covered at both the line and branch level. `AudioCapture`, `VirtualMicInjector`, and `SettingsWindow` only reach their extracted pure-logic methods (`EnsureSupportedFormat`, `IsVirtualAudioDeviceName`, `TryParsePositiveHops`/`FormatSecondsLabel`/`DigitsOnly`) — the rest of those classes, and the UI classes, require live WASAPI devices or interactive WPF rendering (STA thread, `Dispatcher`, real `MessageBox`/`Window`) and are covered by manual testing instead (see [`../AGENTS.md`](../AGENTS.md)'s known limitations and the installation/setup steps in [`../README.md`](../README.md)).

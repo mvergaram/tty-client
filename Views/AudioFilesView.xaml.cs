@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Input;
 using TtyClient.Audio;
 using TtyClient.TTY;
 
@@ -17,7 +18,15 @@ public partial class AudioFilesView : UserControl
     public AudioFilesView()
     {
         InitializeComponent();
+
+        DataObject.AddPastingHandler(MessageInput, MessageInput_Pasting);
     }
+
+    private void MessageInput_PreviewTextInput(object sender, TextCompositionEventArgs e) =>
+        BaudotTextBoxInput.FilterPreviewTextInput(MessageInput, e);
+
+    private void MessageInput_Pasting(object sender, DataObjectPastingEventArgs e) =>
+        BaudotTextBoxInput.FilterPasting(MessageInput, e);
 
     private void AppendTranscript(char ch)
     {

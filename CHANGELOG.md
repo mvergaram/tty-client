@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+## [1.6.0] - 2026-11-24
+### Added
+- The Call Conversation "send" text box now normalizes input live as it's typed or pasted:
+  accents/diacritics are stripped (e.g. `mamá` → `MAMA`, `niño` → `NINO`), letters are
+  upper-cased, and characters with no Baudot representation are rejected outright, so what's
+  shown always matches exactly what will be transmitted. The Audio Files "text to convert" box
+  now gets the same live normalization.
+
+### Changed
+- The Call Conversation "Clear" link is now only available while not listening; it's disabled,
+  greyed out, and struck through while a call is being listened to, so clearing the transcript
+  mid-call isn't possible.
+
+### Fixed
+- Fixed the Call Conversation window (including the text input) freezing while an AI
+  improved-text request was in flight: a custom Portkey header policy was forcing the HTTP
+  call to run synchronously on the UI thread instead of truly asynchronously.
+- Fixed a cryptic `Unknown ChatFinishReason value` error shown when a model behind Portkey
+  refuses to answer (e.g. Anthropic's `refusal` finish reason, unrecognized by the OpenAI SDK);
+  it's now shown as a readable "the model declined to respond" message.
+- Fixed a confusing `AI: (error) status 400: ... must contain non-whitespace text` line shown for
+  a received message that decoded to nothing but spaces (e.g. a noisy/idle line). The AI call is
+  now skipped for such messages; the received characters still show normally, just without an
+  `AI:` line.
+- Fixed sending a new message cutting off the previous one's FSK audio mid-transmission: "Send"
+  is now disabled until the outgoing audio for the current message has finished playing.
+
 ## [1.5.0] - 2026-11-18
 ### Added
 - Configurable maximum output tokens for the AI improved text feature, with its own field in

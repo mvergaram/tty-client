@@ -75,4 +75,37 @@ public class BaudotEncoderTests
     {
         Assert.Throws<NullReferenceException>(() => BaudotEncoder.Encode(null!));
     }
+
+    [Theory]
+    [InlineData("mamá", "MAMA")]
+    [InlineData("pinguino", "PINGUINO")]
+    [InlineData("pingüino", "PINGUINO")]
+    [InlineData("niño", "NINO")]
+    [InlineData("café", "CAFE")]
+    public void TryNormalize_StripsDiacriticsAndUppercases(string input, string expected)
+    {
+        Assert.True(BaudotEncoder.TryNormalize(input, out string normalized));
+        Assert.Equal(expected, normalized);
+    }
+
+    [Fact]
+    public void TryNormalize_DropsUnsupportedCharacters()
+    {
+        Assert.True(BaudotEncoder.TryNormalize("A@B%C", out string normalized));
+        Assert.Equal("ABC", normalized);
+    }
+
+    [Fact]
+    public void TryNormalize_OnlyUnsupportedCharacters_ReturnsFalse()
+    {
+        Assert.False(BaudotEncoder.TryNormalize("@%", out string normalized));
+        Assert.Equal(string.Empty, normalized);
+    }
+
+    [Fact]
+    public void TryNormalize_EmptyString_ReturnsFalse()
+    {
+        Assert.False(BaudotEncoder.TryNormalize("", out string normalized));
+        Assert.Equal(string.Empty, normalized);
+    }
 }

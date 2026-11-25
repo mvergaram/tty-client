@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 
 namespace TtyClient.TTY;
 
@@ -76,5 +78,31 @@ public static class BaudotEncoder
         // End with LTRS
         result.Add(BaudotTables.Ltrs);
         return result;
+    }
+
+    /// <summary>
+    /// Normalizes arbitrary text for Baudot transmission: strips accents/diacritics (e.g. 'á' and
+    /// 'ñ' decompose to a base letter + a combining mark, so dropping the mark alone turns them
+    /// into 'A' and 'N'), upper-cases the result, and drops any character still not representable
+    /// in ITA-2 (per <see cref="CharMap"/>, the same map <see cref="Encode"/> uses — so what's kept
+    /// here is always exactly what would actually be sent). Returns false if nothing survives.
+    /// </summary>
+    public static bool TryNormalize(string input, out string normalized)
+    {
+        string decomposed = input.Normalize(NormalizationForm.FormD);
+        var result = new StringBuilder(decomposed.Length);
+
+        foreach (char ch in decomposed)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(ch) == UnicodeCategory.NonSpacingMark)
+                continue; // combining accent/diacritic mark from the decomposition above
+
+            char upper = char.ToUpperInvariant(ch);
+            if (CharMap.ContainsKey(upper))
+                result.Append(upper);
+        }
+
+        normalized = result.ToString();
+        return normalized.Length > 0;
     }
 }

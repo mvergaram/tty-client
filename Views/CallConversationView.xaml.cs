@@ -44,6 +44,7 @@ public partial class CallConversationView : UserControl
     private CallTranscriptLogger? _transcriptLogger;
 
     private Run? _lastRun;
+    private bool _isSending;
 
     public CallConversationView()
     {
@@ -57,12 +58,25 @@ public partial class CallConversationView : UserControl
         _sync.CharacterReceived += code => _decoder.OnByte(code);
         _decoder.CharacterDecoded += ch => Dispatcher.Invoke(() => AppendReceived(ch));
 
+        // Keep "Send" disabled for the duration of the outgoing FSK audio, so a new message can't
+        // cut the previous one off mid-transmission (VirtualMicInjector.Play stops whatever is
+        // currently playing before starting the next one).
+        _injector.PlaybackFinished += (_, _) => Dispatcher.Invoke(() =>
+        {
+            _isSending = false;
+            UpdateSendButtonEnabled();
+        });
+
         _aiDebounceTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _aiDebounceTimer.Tick += AiDebounceTimer_Tick;
 
         UpdateAiBadgeVisibility();
         App.Settings.Changed += UpdateAiBadgeVisibility;
         App.Settings.Changed += () => _aiClient = BuildAiClient();
+
+        UpdateClearButtonState();
+
+        DataObject.AddPastingHandler(SendInput, SendInput_Pasting);
 
         RefreshDevices();
         RefreshInputDevices();
@@ -127,7 +141,11 @@ public partial class CallConversationView : UserControl
         _pendingReceivedMessage.Clear();
         _transcriptLogger?.LogReceived(message);
 
-        if (App.Settings.AiImprovedTextEnabled)
+        // A message that's just spaces (e.g. a noisy/idle stretch decoded as repeated SPACE
+        // codes) has nothing for the AI to improve, and some providers behind Portkey (vertex-ai)
+        // reject a whitespace-only message with an HTTP 400 "must contain non-whitespace text".
+        // Skip the call entirely instead of surfacing that as a confusing "AI: (error) ..." line.
+        if (App.Settings.AiImprovedTextEnabled && !string.IsNullOrWhiteSpace(message))
             _ = ImproveAndAppendAsync(message, _transcriptLogger, _callSessionCts?.Token ?? CancellationToken.None);
     }
 
@@ -227,7 +245,9 @@ public partial class CallConversationView : UserControl
 
             BtnListen.Content = "Stop";
             BtnListen.Style = (Style)FindResource("StopButton");
-            BtnSend.IsEnabled = true;
+            _isSending = false;
+            UpdateSendButtonEnabled();
+            UpdateClearButtonState();
         }
         catch (Exception ex)
         {
@@ -252,7 +272,21 @@ public partial class CallConversationView : UserControl
 
         BtnListen.Content = "Start listening";
         BtnListen.Style = (Style)FindResource("SendButton");
-        BtnSend.IsEnabled = false;
+        _isSending = false;
+        UpdateSendButtonEnabled();
+        UpdateClearButtonState();
+    }
+
+    private void UpdateSendButtonEnabled() => BtnSend.IsEnabled = _capture.IsCapturing && !_isSending;
+
+    // "Clear" would wipe the transcript out from under an ongoing call, so it's only available
+    // while not listening — greyed out (ActionButton's disabled trigger) and struck through while
+    // listening, to make it visually obvious it's unavailable rather than just unresponsive.
+    private void UpdateClearButtonState()
+    {
+        bool listening = _capture.IsCapturing;
+        BtnClear.IsEnabled = !listening;
+        BtnClearLabel.TextDecorations = listening ? TextDecorations.Strikethrough : null;
     }
 
     private void InputDeviceCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -262,6 +296,12 @@ public partial class CallConversationView : UserControl
         if (_capture.IsCapturing) StartCapture();
     }
 
+    private void SendInput_PreviewTextInput(object sender, TextCompositionEventArgs e) =>
+        BaudotTextBoxInput.FilterPreviewTextInput(SendInput, e);
+
+    private void SendInput_Pasting(object sender, DataObjectPastingEventArgs e) =>
+        BaudotTextBoxInput.FilterPasting(SendInput, e);
+
     private void BtnSend_Click(object sender, RoutedEventArgs e) => SendText();
 
     private void SendInput_KeyDown(object sender, KeyEventArgs e)
@@ -269,12 +309,14 @@ public partial class CallConversationView : UserControl
         if (e.Key == Key.Enter)
         {
             e.Handled = true;
-            SendText();
+            if (BtnSend.IsEnabled) SendText(); // KeyDown bypasses the disabled Button, so check explicitly
         }
     }
 
     private void SendText()
     {
+        if (_isSending) return; // previous message's FSK audio hasn't finished playing yet
+
         string text = SendInput.Text.Trim();
         if (string.IsNullOrEmpty(text)) return;
 
@@ -292,6 +334,9 @@ public partial class CallConversationView : UserControl
         string? device = DeviceCombo.SelectedIndex > 0
             ? DeviceCombo.SelectedItem?.ToString()
             : null;
+
+        _isSending = true;
+        UpdateSendButtonEnabled();
 
         _injector.Play(audio, device);
         SendInput.Clear();

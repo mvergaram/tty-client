@@ -57,10 +57,12 @@
                             </Border>
                         </StackPanel>
                     </Border>
-                    <Button Grid.Column="1" Content="Clear"
+                    <Button Grid.Column="1" x:Name="BtnClear"
                             Style="{StaticResource ActionButton}"
                             Padding="10,3" FontSize="11" Margin="0,4,4,4"
-                            Click="BtnClear_Click"/>
+                            Click="BtnClear_Click">
+                        <TextBlock x:Name="BtnClearLabel" Text="Clear"/>
+                    </Button>
                 </Grid>
                 <RichTextBox Grid.Row="1" x:Name="ReceivedBox"
                               Background="Transparent" Foreground="#CDD6F4"
@@ -102,6 +104,7 @@
                              Padding="8,6" FontFamily="Consolas" FontSize="14"
                              CaretBrush="#CDD6F4"
                              KeyDown="SendInput_KeyDown"
+                             PreviewTextInput="SendInput_PreviewTextInput"
                              MaxLength="512"/>
                     <Button Grid.Column="1" Content="Send (Enter)"
                             Style="{StaticResource SendButton}"

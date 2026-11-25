@@ -31,6 +31,7 @@
                              BorderThickness="1" BorderBrush="#45475A"
                              Padding="8,6" FontFamily="Consolas" FontSize="14"
                              CaretBrush="#CDD6F4"
+                             PreviewTextInput="MessageInput_PreviewTextInput"
                              MaxLength="512"/>
                     <Button Grid.Column="1" Content="Save WAV"
                             Style="{StaticResource ActionButton}"

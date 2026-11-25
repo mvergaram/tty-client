@@ -9,7 +9,7 @@
     <AssemblyName>TtyClient</AssemblyName>
     <Product>TTY Client</Product>
     <AssemblyTitle>TTY Client</AssemblyTitle>
-    <Version>1.5.0</Version>
+    <Version>1.6.0</Version>
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
   </PropertyGroup>
 

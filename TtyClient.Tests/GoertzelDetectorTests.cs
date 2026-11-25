@@ -180,4 +180,23 @@ public class GoertzelDetectorTests
 
         Assert.Throws<IndexOutOfRangeException>(() => detector.ProcessSamples(new short[5], 10));
     }
+
+    [Fact]
+    public void ProcessSamples_NoLineIdleSubscriber_DoesNotThrow()
+    {
+        var detector = new GoertzelDetector();
+        detector.BitDetected += _ => { }; // subscribed, but LineIdle deliberately is not
+
+        var exception = Record.Exception(() =>
+        {
+            var tone = GenerateTone(1400.0, 2000);
+            detector.ProcessSamples(tone, tone.Length);
+
+            // Well over a second of silence: comfortably past the ~1s idle threshold.
+            var silence = new short[16000];
+            detector.ProcessSamples(silence, silence.Length);
+        });
+
+        Assert.Null(exception);
+    }
 }

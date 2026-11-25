@@ -107,4 +107,18 @@ public class BitSynchronizerTests
 
         Assert.Equal(new byte[] { 17 }, received);
     }
+
+    [Fact]
+    public void OnBit_NoSubscriber_DoesNotThrow()
+    {
+        var sync = new BitSynchronizer();
+
+        var exception = Record.Exception(() =>
+        {
+            foreach (var tick in BuildFrameTicks(5))
+                sync.OnBit(tick);
+        });
+
+        Assert.Null(exception);
+    }
 }

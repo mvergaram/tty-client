@@ -102,4 +102,14 @@ public class BaudotDecoderTests
 
         Assert.Throws<IndexOutOfRangeException>(() => decoder.OnByte(code));
     }
+
+    [Fact]
+    public void OnByte_NoSubscriber_DoesNotThrow()
+    {
+        var decoder = new BaudotDecoder();
+
+        var exception = Record.Exception(() => decoder.OnByte(1)); // LTRS (default) -> 'E'
+
+        Assert.Null(exception);
+    }
 }

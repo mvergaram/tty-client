@@ -117,4 +117,33 @@ public class AudioResamplerTests
         Assert.NotEmpty(detections);
         Assert.All(detections, Assert.True); // MARK (1400 Hz)
     }
+
+    [Fact]
+    public void Resample_NegativeInputSampleRate_ClampsToEmptyResult()
+    {
+        // With a negative input rate the computed output-frame count goes negative; this
+        // clamps it (and the carried-over fractional position) back to zero instead of
+        // underflowing into a negative-length array.
+        var resampler = new AudioResampler(inputSampleRate: -8000, inputChannels: 1);
+        var input = ToFloatBytes(0f, 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f);
+
+        var output = resampler.Resample(input, input.Length);
+
+        Assert.Empty(output);
+    }
+
+    [Fact]
+    public void Resample_ExtremeUpsamplingRoundingEdgeCase_ClampsLastSampleToZero()
+    {
+        // At this extreme upsampling ratio, double-precision rounding makes the computed
+        // output-frame count land one past the input: the last output sample's source index
+        // equals monoFloat.Length exactly, which must fall back to 0 rather than index out
+        // of bounds.
+        var resampler = new AudioResampler(inputSampleRate: 9, inputChannels: 1);
+        var input = ToFloatBytes(0f, 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f);
+
+        var output = resampler.Resample(input, input.Length);
+
+        Assert.Equal(8001, output.Length);
+    }
 }

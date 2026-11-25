@@ -18,6 +18,13 @@ public class VirtualMicInjector : IDisposable
     // 16-bit PCM mono at 8000 Hz
     private static readonly WaveFormat TtyFormat = new WaveFormat(8000, 16, 1);
 
+    /// <summary>
+    /// Raised when a <see cref="Play"/> call's audio has finished playing out (whether it ran to
+    /// completion or was interrupted by <see cref="Stop"/> or an error) — the signal callers use to
+    /// know it's safe to start the next message without cutting this one off mid-transmission.
+    /// </summary>
+    public event EventHandler? PlaybackFinished;
+
     public List<string> GetVirtualDevices()
     {
         var enumerator = new MMDeviceEnumerator();
@@ -55,6 +62,7 @@ public class VirtualMicInjector : IDisposable
         _player = device != null
             ? new WasapiOut(device, AudioClientShareMode.Shared, true, 50)
             : new WasapiOut(AudioClientShareMode.Shared, true, 50);
+        _player.PlaybackStopped += (_, _) => PlaybackFinished?.Invoke(this, EventArgs.Empty);
 
         var provider = new RawSourceWaveStream(
             new System.IO.MemoryStream(pcmBytes), TtyFormat);

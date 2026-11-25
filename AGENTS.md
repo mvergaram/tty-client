@@ -112,7 +112,12 @@ clean up typos caused by audio noise or FIGS/LTRS shift mix-ups. **Disabled by d
   `#CBA6F7`), followed by two blank lines. On failure or a 15-second timeout, `AI: (error) <status:
   message>` is appended instead (red/pink, `#F38BA8`) — a `System.ClientModel.ClientResultException`
   (an HTTP-level failure from Portkey/OpenAI) shows its status code and message; any other exception
-  shows just its message. Failures are always shown on screen, never silent.
+  shows just its message. Failures are always shown on screen, never silent — **except** a
+  whitespace-only message (e.g. a noisy/idle stretch decoded as repeated SPACE codes), which is
+  skipped before the AI call is even made: some providers behind Portkey (vertex-ai) reject it with
+  an HTTP 400 "must contain non-whitespace text", which would be a confusing error to surface since
+  there was never any real content to improve. The raw received characters are still shown either
+  way; only the `AI:` line (success or error) is omitted for that one message.
 - **Configuration**: URL, API key, provider, model, and max output tokens
   (`ChatCompletionOptions.MaxOutputTokenCount`, capping response length/cost) are separate fields
   in `SettingsWindow` (see [Settings](#settings)), persisted alongside everything else in
@@ -179,12 +184,25 @@ both read the latest `AppSettings` values via the `Changed` event), even during 
 
 ## Maintenance of related materials
 
-Whenever a change modifies the app's UI (views in `Views/`, styles in `App.xaml`, etc.), ask the user
-before finishing the task whether the following should also be updated:
+### Presentation materials (separate repo)
+
+The presentation deck, presenter guides, and demo screenshots used to live in `presentation/` inside
+this repo, but that folder has been extracted into its own private GitHub repo:
+<https://github.com/mvergaram/tty-client-presentation> (local sibling clone, when present, at
+`..\tty-client-presentation` next to this repo). It contains:
+- `TTY_Client_Presentacion_ES.pptx` / `TTY_Client_Presentation_EN.pptx` — the slide decks.
+- `TTY_Client_Guia_Presentador_ES.docx` / `TTY_Client_Presenter_Guide_EN.docx` — presenter guides.
+- `screenshots/` — `app_icon.png`, `call_view.png`, `files_view.png`, embedded in the decks/guides.
+- `_build/generar_presentacion.py` — the generator script that assembles the PPTX/DOCX from the
+  screenshots (the `shot_call`/`shot_files` slides reference `call_view.png`/`files_view.png`).
+
+Whenever a task makes an important change to this project — a new feature, a significant behavior
+change, or a UI change (views in `Views/`, styles in `App.xaml`, etc.) — ask the user before finishing
+the task whether the following should also be updated:
 - Screenshots in `README.md` (if any exist and show the part of the UI that changed).
-- Screenshots in `presentation/screenshots/` and, if relevant, the related content in the generator
-  script `presentation/_build/generar_presentacion.py` (the `shot_call`/`shot_files` slides in the PPTX
-  and the images embedded in the presenter guide DOCX).
+- The presentation materials above, in the separate `tty-client-presentation` repo (screenshots,
+  slide content, and/or presenter guide text, as relevant to the change).
 
 Do not update these materials automatically without confirming first — they are external deliverables
-(demos, presenter guides) that don't always need to stay in sync with every minor visual change.
+(demos, presenter guides) that don't always need to stay in sync with every change, and they live in a
+different repo that must be cloned/pulled and committed/pushed independently of this one.
