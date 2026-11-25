@@ -11,7 +11,25 @@ namespace TtyClient;
 
 public partial class SettingsWindow : Window
 {
-    private static readonly Regex DigitsOnly = new("^[0-9]+$");
+    internal static readonly Regex DigitsOnly = new("^[0-9]+$");
+
+    /// <summary>Parses a positive whole number of hops, rejecting zero, negatives, and overflow.</summary>
+    internal static bool TryParsePositiveHops(string text, out int hops)
+    {
+        bool ok = int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out hops) && hops > 0;
+        if (!ok) hops = 0;
+        return ok;
+    }
+
+    /// <summary>Formats the "~ X sec." label shown next to the hops field, or a placeholder when invalid.</summary>
+    internal static string FormatSecondsLabel(string hopsText)
+    {
+        if (!TryParsePositiveHops(hopsText, out int hops))
+            return "~ ? sec.";
+
+        double seconds = GoertzelDetector.HopsToSeconds(hops);
+        return $"~ {seconds.ToString("0.0", CultureInfo.InvariantCulture)} sec.";
+    }
 
     public SettingsWindow()
     {
@@ -53,22 +71,11 @@ public partial class SettingsWindow : Window
 
     private void HopsInput_TextChanged(object sender, TextChangedEventArgs e) => UpdateSecondsLabel();
 
-    private void UpdateSecondsLabel()
-    {
-        if (int.TryParse(HopsInput.Text, NumberStyles.None, CultureInfo.InvariantCulture, out var hops) && hops > 0)
-        {
-            var seconds = GoertzelDetector.HopsToSeconds(hops);
-            SecondsLabel.Text = $"~ {seconds.ToString("0.0", CultureInfo.InvariantCulture)} sec.";
-        }
-        else
-        {
-            SecondsLabel.Text = "~ ? sec.";
-        }
-    }
+    private void UpdateSecondsLabel() => SecondsLabel.Text = FormatSecondsLabel(HopsInput.Text);
 
     private void BtnSave_Click(object sender, RoutedEventArgs e)
     {
-        if (!int.TryParse(HopsInput.Text, NumberStyles.None, CultureInfo.InvariantCulture, out var hops) || hops <= 0)
+        if (!TryParsePositiveHops(HopsInput.Text, out var hops))
         {
             MessageBox.Show("Enter a positive whole number.", "Invalid value",
                 MessageBoxButton.OK, MessageBoxImage.Error);
